@@ -19,9 +19,9 @@ func NewMaze(width, height int) *Maze {
 		maze.Grid[i] = make([]Cell, width)
 		for j := range maze.Grid[i] {
 			if i%2 == 0 && j%2 == 0 {
-				maze.Grid[i][j] = Wall
-			} else {
 				maze.Grid[i][j] = Empty
+			} else {
+				maze.Grid[i][j] = Wall
 			}
 		}
 	}
