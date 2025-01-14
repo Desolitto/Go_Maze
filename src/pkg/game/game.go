@@ -1,10 +1,13 @@
 package game
 
 import (
+	"bufio"
 	"go-maze/pkg/maze"
 	"image/color"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -47,7 +50,7 @@ func (g *Game) Update() error {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if g.isInsideButton(float32(x), float32(y)) {
-			g.LoadMazeFromFile("path/to/maze/file.txt") // Укажите путь к файлу
+			g.LoadMazeFromFile("/Users/calamarp/Desktop/go/Go_Maze/src/example.txt") // Укажите путь к файлу
 		}
 	}
 	return nil
@@ -76,15 +79,54 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) LoadMazeFromFile(filename string) {
-	// Загрузка лабиринта из файла
-	//...
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	// Загрузка и проверка лабиринта
-	// g.maze = maze.LoadMaze(file)
+
+	scanner := bufio.NewScanner(file)
+
+	// Читаем размеры лабиринта
+	if scanner.Scan() {
+		dimensions := strings.Fields(scanner.Text())
+		if len(dimensions) != 2 {
+			log.Fatal("Неверный формат файла: первая строка должна содержать размеры лабиринта.")
+		}
+
+		width, err := strconv.Atoi(dimensions[0])
+		if err != nil || width > maxMazeSize {
+			log.Fatal("Неверный ширина лабиринта.")
+		}
+
+		height, err := strconv.Atoi(dimensions[1])
+		if err != nil || height > maxMazeSize {
+			log.Fatal("Неверная высота лабиринта.")
+		}
+
+		g.w, g.h = width, height
+		g.cellSize = float32(mazeWidth) / float32(width)
+		g.maze = maze.NewMaze(width, height)
+
+		// Читаем содержимое лабиринта
+		for y := 0; y < height; y++ {
+			if scanner.Scan() {
+				row := strings.Fields(scanner.Text())
+				if len(row) != width {
+					log.Fatal("Неверный формат файла: количество столбцов не совпадает с заданной шириной.")
+				}
+				for x, cell := range row {
+					if cell == "1" {
+						g.maze.Grid[y][x] = maze.Empty
+					} else if cell == "0" {
+						g.maze.Grid[y][x] = maze.Wall
+					} else {
+						log.Fatal("Неверный символ в лабиринте: должен быть 0 или 1.")
+					}
+				}
+			}
+		}
+	}
 }
 
 func (g *Game) drawMazeBorder(screen *ebiten.Image) {
