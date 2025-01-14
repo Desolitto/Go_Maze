@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"go-maze/pkg/game"
@@ -19,7 +20,8 @@ func main() {
 	flag.Parse()
 
 	game := game.NewGame(*w, *h, *birthLimit, *deathLimit, *initialChance)
-
+	fmt.Println("Исходная матрица:")
+	game.PrintMaze()
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

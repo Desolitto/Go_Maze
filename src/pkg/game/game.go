@@ -71,6 +71,9 @@ func (g *Game) Update() error {
 		if g.isInsideButton(float32(x), float32(y)) {
 			g.LoadCaveFromFile("/Users/calamarp/Desktop/go/Go_Maze/src/example.txt") // Укажите путь к файлу
 			// g.cave.GenerateCave(45, 4, 3)
+			// Печать обновленной матрицы
+			fmt.Println("Обновленная матрица:1")
+			g.PrintMaze()
 		}
 	}
 
@@ -87,7 +90,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Рисуем лабиринт
 	for y, row := range g.cave.Grid {
 		for x, cell := range row {
-			if cell == maze.Wall {
+			if cell == maze.Alive {
 
 				vector.DrawFilledRect(screen, float32(x)*g.cellSize+2, float32(y)*g.cellSize+2, g.cellSize-wallThickness, g.cellSize-wallThickness, colorMaze, false)
 			}
@@ -142,10 +145,10 @@ func (g *Game) LoadCaveFromFile(filename string) {
 					log.Fatal("Неверный формат файла: количество столбцов не совпадает с заданной шириной.")
 				}
 				for x, cell := range row {
-					if cell == "0" {
-						g.cave.Grid[y][x] = maze.Wall
-					} else if cell == "1" {
-						g.cave.Grid[y][x] = maze.Empty
+					if cell == "1" {
+						g.cave.Grid[y][x] = maze.Death
+					} else if cell == "0" {
+						g.cave.Grid[y][x] = maze.Alive
 					} else {
 						log.Fatal("Неверный символ в пещере: должен быть 0 или 1.")
 					}
@@ -156,30 +159,38 @@ func (g *Game) LoadCaveFromFile(filename string) {
 }
 
 func (g *Game) Step() {
-	// Логика для одного шага генерации пещеры
 	newGrid := make([][]maze.Cell, g.cave.Height)
 	for i := range newGrid {
 		newGrid[i] = make([]maze.Cell, g.cave.Width)
-		copy(newGrid[i], g.cave.Grid[i]) // Копируем текущее состояние
 	}
+
+	fmt.Println("Состояние матрицы перед шагом:")
+	g.PrintMaze()
 
 	for y := 0; y < g.cave.Height; y++ {
 		for x := 0; x < g.cave.Width; x++ {
 			wallCount := g.cave.CountAliveAround(x, y)
-			fmt.Println("wall count: ", wallCount)
-			if g.cave.Grid[y][x] == maze.Wall { // Если клетка мертвая
-				if wallCount <= g.birthLimit {
-					newGrid[y][x] = maze.Empty // Клетка становится живой
+			fmt.Printf("Клетка (%d, %d), wallCount: %d\n", x, y, wallCount)
+
+			if g.cave.Grid[y][x] == maze.Alive { // Если клетка живая
+				if wallCount < g.deathLimit {
+					newGrid[y][x] = maze.Death // Клетка умирает
+				} else {
+					newGrid[y][x] = maze.Alive // Остается живой
 				}
-			} else { // Если клетка живая
-				if wallCount >= g.deathLimit {
-					newGrid[y][x] = maze.Wall // Клетка умирает
+			} else { // Если клетка мертвая
+				if wallCount > g.birthLimit {
+					newGrid[y][x] = maze.Alive // Клетка становится живой
+				} else {
+					newGrid[y][x] = maze.Death // Остается мертвой
 				}
 			}
 		}
 	}
 
-	g.cave.Grid = newGrid // Обновляем состояние карты
+	g.cave.Grid = newGrid
+	fmt.Println("Состояние матрицы после шага:")
+	g.PrintMaze()
 }
 
 func (g *Game) drawCaveBorder(screen *ebiten.Image) {
@@ -243,6 +254,7 @@ func (g *Game) drawControlButtons(screen *ebiten.Image) {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if g.isInsideControlButton(float32(x), float32(y), nextStepButtonY) {
+			// Печать обновленной матрицы
 			g.Step() // Вызываем шаг
 		}
 		if g.isInsideControlButton(float32(x), float32(y), autoStepButtonY) {
@@ -255,4 +267,8 @@ func (g *Game) isInsideControlButton(x, y float32, buttonY float32) bool {
 	buttonX := float32(0)
 	buttonWidth := float32(caveWidth + borderThickness*2)
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
+}
+
+func (g *Game) PrintMaze() {
+	g.cave.Print() // Вызываем метод Print на структуре Maze
 }
