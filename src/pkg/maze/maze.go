@@ -81,9 +81,7 @@ func (m *Maze) CountAliveAround(x, y int) int {
 			nx, ny := x+dx, y+dy
 
 			// Проверяем, что индексы находятся в пределах границ
-			if nx < 0 || nx >= m.Width || ny < 0 || ny >= m.Height {
-				count++
-			} else if m.Grid[ny][nx] == Alive {
+			if (nx < 0 || nx >= m.Width || ny < 0 || ny >= m.Height) || m.Grid[ny][nx] == Alive {
 				count++
 			}
 		}
