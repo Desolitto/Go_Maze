@@ -15,6 +15,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"github.com/sqweek/dialog"
 )
 
 const (
@@ -104,9 +105,15 @@ func (g *Game) Update() error {
 
 		// Проверка нажатия кнопки "Загрузить лабиринт"
 		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness), buttonHeight) {
-			g.LoadCaveFromFile("/Users/calamarp/Desktop/go/Go_Maze/src/example.txt")
-			fmt.Println("Обновленная матрица:1")
-			g.PrintMaze()
+			// filePath, err := dialog.File().Filter("Text Files", "*.txt").Load()
+			// if err != nil {
+			// 	fmt.Println("Ошибка при выборе файла:", err)
+			// 	return err
+			// }
+			// g.LoadCaveFromFile(filePath)
+			// fmt.Println("Обновленная матрица:1")
+			// g.PrintMaze()
+			go g.ShowFileSelector() // Запускаем выбор файла в горутине
 		}
 
 		// Проверка нажатия кнопки "Следующий шаг"
@@ -346,4 +353,27 @@ func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float3
 	buttonX := float32(0)
 	buttonWidth := float32(caveWidth + borderThickness*2)
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
+}
+
+func (g *Game) ShowFileSelector() {
+	// Получаем текущую директорию, из которой запускается приложение
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Println("Ошибка при получении текущей директории:", err)
+		return
+	}
+
+	// Открываем диалоговое окно для выбора файла
+	filename, err := dialog.File().
+		Filter("Text files", "txt"). // Добавляем "Все файлы" для проверки
+		SetStartDir(currentDir).     // Устанавливаем начальную директорию
+		Load()
+
+	if err != nil {
+		log.Println("Ошибка при выборе файла:", err)
+		return
+	}
+
+	g.LoadCaveFromFile(filename) // Загружаем выбранный файл
+	fmt.Println("Выбранный файл:", filename)
 }
