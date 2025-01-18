@@ -46,10 +46,8 @@ func NewGame(w, h, birthLimit, deathLimit, initialChance int) *Game {
 	if w > maxCaveSize || h > maxCaveSize {
 		log.Fatalf("Размер лабиринта не должен превышать %d", maxCaveSize)
 	}
-	// Увеличиваем высоту окна на размер кнопки и рамки
 	ebiten.SetWindowSize(caveWidth+int(borderThickness*2), caveHeight+buttonHeight*3+int(borderThickness))
 	ebiten.SetWindowTitle("Cave Generator")
-	// Вычисляем размер ячейки
 	cellSize := float32(caveWidth) / float32(w)
 	cave := maze.NewMaze(w, h)
 	return &Game{
@@ -66,26 +64,59 @@ func NewGame(w, h, birthLimit, deathLimit, initialChance int) *Game {
 	}
 }
 
+// func (g *Game) Update() error {
+// 	// Обработка ввода
+// 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+// 		x, y := ebiten.CursorPosition()
+
+// 		// Проверка нажатия кнопки "Загрузить лабиринт"
+// 		if g.isInsideButton(float32(x), float32(y)) {
+// 			g.LoadCaveFromFile("/Users/calamarp/Desktop/go/Go_Maze/src/example.txt")
+// 			fmt.Println("Обновленная матрица:1")
+// 			g.PrintMaze()
+// 		}
+
+// 		// Проверка нажатия кнопки "Следующий шаг"
+// 		if g.isInsideControlButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight)) {
+// 			g.Step()                 // Вызываем шаг
+// 			g.autoStepActive = false // Отключаем автошаг после шага
+// 		}
+
+// 		// Проверка нажатия кнопки "Автошаг"
+// 		if g.isInsideControlButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight*2)) {
+// 			g.autoStepActive = !g.autoStepActive // Переключаем автошаг
+// 		}
+// 	}
+
+// 	// Выполняем автоматический шаг, если активен
+// 	if g.autoStepActive {
+// 		time.Sleep(g.autoStepInterval)
+// 		g.Step()
+// 	}
+
+// 	return nil
+// }
+
 func (g *Game) Update() error {
 	// Обработка ввода
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 
 		// Проверка нажатия кнопки "Загрузить лабиринт"
-		if g.isInsideButton(float32(x), float32(y)) {
+		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness), buttonHeight) {
 			g.LoadCaveFromFile("/Users/calamarp/Desktop/go/Go_Maze/src/example.txt")
 			fmt.Println("Обновленная матрица:1")
 			g.PrintMaze()
 		}
 
 		// Проверка нажатия кнопки "Следующий шаг"
-		if g.isInsideControlButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight)) {
+		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight), buttonHeight) {
 			g.Step()                 // Вызываем шаг
 			g.autoStepActive = false // Отключаем автошаг после шага
 		}
 
 		// Проверка нажатия кнопки "Автошаг"
-		if g.isInsideControlButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight*2)) {
+		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight*2), buttonHeight) {
 			g.autoStepActive = !g.autoStepActive // Переключаем автошаг
 		}
 	}
@@ -120,7 +151,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// Рисуем кнопки
-	g.drawButton(screen)
+	// g.drawButton(screen)
 	g.drawControlButtons(screen)
 }
 
@@ -225,15 +256,66 @@ func (g *Game) drawCaveBorder(screen *ebiten.Image) {
 	vector.StrokeLine(screen, caveWidth, 0, caveWidth, caveHeight, borderThickness, borderColor, true)
 }
 
-func (g *Game) drawButton(screen *ebiten.Image) {
+// func (g *Game) drawButton(screen *ebiten.Image) {
+// 	buttonWidth := float32(caveWidth + borderThickness*2) // Кнопка на всю ширину
+// 	buttonY := float32(caveHeight + borderThickness)      // Позиция Y
+
+// 	// Рисуем кнопку
+// 	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, buttonHeight, color.RGBA{0, 0, 155, 255}, false)
+
+// 	// Определяем текст и его размеры
+// 	buttonText := "Generate Cave"
+// 	textWidth := float32(len(buttonText) * 8) // Оценка ширины текста
+// 	textHeight := float32(16)                 // Высота текста
+
+// 	// Вычисляем координаты для центрирования текста
+// 	textX := (buttonWidth - textWidth) / 2
+// 	textY := buttonY + (buttonHeight-textHeight)/2
+
+// 	// Рисуем текст на кнопке
+// 	ebitenutil.DebugPrintAt(screen, buttonText, int(textX), int(textY)) // Отрисовка текста
+// }
+
+// func (g *Game) isInsideButton(x, y float32) bool {
+// 	buttonX := float32(0)                                 // Начинаем с нуля по X
+// 	buttonY := float32(caveHeight + borderThickness)      // Позиция Y
+// 	buttonWidth := float32(caveWidth + borderThickness*2) // Кнопка на всю ширину
+// 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
+// }
+
+// func (g *Game) drawControlButtons(screen *ebiten.Image) {
+// 	buttonWidth := float32(caveWidth + borderThickness*2)
+// 	buttonY := float32(caveHeight + borderThickness + buttonHeight) // Начальная позиция Y для первой кнопки
+
+// 	// Кнопка для следующего шага
+// 	nextStepButtonY := buttonY
+// 	vector.DrawFilledRect(screen, 0, nextStepButtonY, buttonWidth, buttonHeight, color.RGBA{0, 155, 0, 255}, false)
+// 	ebitenutil.DebugPrintAt(screen, "Next Step", 10, int(nextStepButtonY)+5)
+
+// 	// Кнопка для автоматического шага
+// 	autoStepButtonY := nextStepButtonY + buttonHeight // Кнопка сразу под первой
+// 	vector.DrawFilledRect(screen, 0, autoStepButtonY, buttonWidth, buttonHeight, color.RGBA{155, 0, 0, 255}, false)
+// 	ebitenutil.DebugPrintAt(screen, "Auto Step", 10, int(autoStepButtonY)+5)
+// }
+
+// func (g *Game) isInsideControlButton(x, y float32, buttonY float32) bool {
+// 	buttonX := float32(0)
+// 	buttonWidth := float32(caveWidth + borderThickness*2)
+// 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
+// }
+
+func (g *Game) PrintMaze() {
+	g.cave.Print() // Вызываем метод Print на структуре Maze
+}
+
+func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float32, color color.RGBA) {
 	buttonWidth := float32(caveWidth + borderThickness*2) // Кнопка на всю ширину
-	buttonY := float32(caveHeight + borderThickness)      // Позиция Y
+	buttonHeight := float32(30)                           // Высота кнопки (установите нужное значение)
 
 	// Рисуем кнопку
-	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, buttonHeight, color.RGBA{0, 0, 155, 255}, false)
+	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, buttonHeight, color, false)
 
-	// Определяем текст и его размеры
-	buttonText := "Generate Cave"
+	// Определяем размеры текста
 	textWidth := float32(len(buttonText) * 8) // Оценка ширины текста
 	textHeight := float32(16)                 // Высота текста
 
@@ -245,34 +327,23 @@ func (g *Game) drawButton(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, buttonText, int(textX), int(textY)) // Отрисовка текста
 }
 
-func (g *Game) isInsideButton(x, y float32) bool {
-	buttonX := float32(0)                                 // Начинаем с нуля по X
-	buttonY := float32(caveHeight + borderThickness)      // Позиция Y
-	buttonWidth := float32(caveWidth + borderThickness*2) // Кнопка на всю ширину
-	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
-}
-
 func (g *Game) drawControlButtons(screen *ebiten.Image) {
-	buttonWidth := float32(caveWidth + borderThickness*2)
 	buttonY := float32(caveHeight + borderThickness + buttonHeight) // Начальная позиция Y для первой кнопки
+
+	// Кнопка для генерации лабиринта
+	g.drawButton(screen, "Generate Cave", float32(caveHeight+borderThickness), color.RGBA{0, 0, 155, 255})
 
 	// Кнопка для следующего шага
 	nextStepButtonY := buttonY
-	vector.DrawFilledRect(screen, 0, nextStepButtonY, buttonWidth, buttonHeight, color.RGBA{0, 155, 0, 255}, false)
-	ebitenutil.DebugPrintAt(screen, "Next Step", 10, int(nextStepButtonY)+5)
+	g.drawButton(screen, "Next Step", nextStepButtonY, color.RGBA{0, 155, 0, 255})
 
 	// Кнопка для автоматического шага
-	autoStepButtonY := nextStepButtonY + buttonHeight // Кнопка сразу под первой
-	vector.DrawFilledRect(screen, 0, autoStepButtonY, buttonWidth, buttonHeight, color.RGBA{155, 0, 0, 255}, false)
-	ebitenutil.DebugPrintAt(screen, "Auto Step", 10, int(autoStepButtonY)+5)
+	autoStepButtonY := nextStepButtonY + buttonHeight // Кнопка сразу под следующей
+	g.drawButton(screen, "Auto Step", autoStepButtonY, color.RGBA{155, 0, 0, 255})
 }
 
-func (g *Game) isInsideControlButton(x, y float32, buttonY float32) bool {
+func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float32) bool {
 	buttonX := float32(0)
 	buttonWidth := float32(caveWidth + borderThickness*2)
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
-}
-
-func (g *Game) PrintMaze() {
-	g.cave.Print() // Вызываем метод Print на структуре Maze
 }
