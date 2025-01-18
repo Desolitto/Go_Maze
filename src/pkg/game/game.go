@@ -51,6 +51,7 @@ func NewGame(w, h, birthLimit, deathLimit, initialChance int) *Game {
 	ebiten.SetWindowTitle("Cave Generator")
 	cellSize := float32(caveWidth) / float32(w)
 	cave := maze.NewMaze(w, h)
+	cave.GenerateCave(initialChance, birthLimit, deathLimit) // Генерация лабиринта
 	return &Game{
 		width:            w,
 		height:           h,
@@ -65,39 +66,6 @@ func NewGame(w, h, birthLimit, deathLimit, initialChance int) *Game {
 	}
 }
 
-// func (g *Game) Update() error {
-// 	// Обработка ввода
-// 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-// 		x, y := ebiten.CursorPosition()
-
-// 		// Проверка нажатия кнопки "Загрузить лабиринт"
-// 		if g.isInsideButton(float32(x), float32(y)) {
-// 			g.LoadCaveFromFile("/Users/calamarp/Desktop/go/Go_Maze/src/example.txt")
-// 			fmt.Println("Обновленная матрица:1")
-// 			g.PrintMaze()
-// 		}
-
-// 		// Проверка нажатия кнопки "Следующий шаг"
-// 		if g.isInsideControlButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight)) {
-// 			g.Step()                 // Вызываем шаг
-// 			g.autoStepActive = false // Отключаем автошаг после шага
-// 		}
-
-// 		// Проверка нажатия кнопки "Автошаг"
-// 		if g.isInsideControlButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight*2)) {
-// 			g.autoStepActive = !g.autoStepActive // Переключаем автошаг
-// 		}
-// 	}
-
-// 	// Выполняем автоматический шаг, если активен
-// 	if g.autoStepActive {
-// 		time.Sleep(g.autoStepInterval)
-// 		g.Step()
-// 	}
-
-// 	return nil
-// }
-
 func (g *Game) Update() error {
 	// Обработка ввода
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -105,14 +73,6 @@ func (g *Game) Update() error {
 
 		// Проверка нажатия кнопки "Загрузить лабиринт"
 		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness), buttonHeight) {
-			// filePath, err := dialog.File().Filter("Text Files", "*.txt").Load()
-			// if err != nil {
-			// 	fmt.Println("Ошибка при выборе файла:", err)
-			// 	return err
-			// }
-			// g.LoadCaveFromFile(filePath)
-			// fmt.Println("Обновленная матрица:1")
-			// g.PrintMaze()
 			go g.ShowFileSelector() // Запускаем выбор файла в горутине
 		}
 
@@ -157,8 +117,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	// Рисуем кнопки
-	// g.drawButton(screen)
 	g.drawControlButtons(screen)
 }
 
@@ -225,7 +183,7 @@ func (g *Game) Step() {
 	}
 
 	fmt.Println("Состояние матрицы перед шагом:")
-	g.PrintMaze()
+	g.PrintCave()
 
 	for y := 0; y < g.cave.Height; y++ {
 		for x := 0; x < g.cave.Width; x++ {
@@ -250,13 +208,11 @@ func (g *Game) Step() {
 
 	g.cave.Grid = newGrid
 	fmt.Println("Состояние матрицы после шага:")
-	g.PrintMaze()
+	g.PrintCave()
 }
 
 func (g *Game) drawCaveBorder(screen *ebiten.Image) {
 	borderColor := color.RGBA{255, 255, 255, 255} // Цвет рамки (белый)
-
-	// Рисуем рамку для области пещеры
 	vector.StrokeLine(screen, 0, 0, caveWidth, 0, borderThickness, borderColor, true)
 	vector.StrokeLine(screen, 0, caveHeight, caveWidth, caveHeight, borderThickness, borderColor, true)
 	vector.StrokeLine(screen, 0, 0, 0, caveHeight, borderThickness, borderColor, true)
@@ -311,7 +267,7 @@ func (g *Game) drawCaveBorder(screen *ebiten.Image) {
 // 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
 // }
 
-func (g *Game) PrintMaze() {
+func (g *Game) PrintCave() {
 	g.cave.Print() // Вызываем метод Print на структуре Maze
 }
 
