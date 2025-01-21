@@ -1,20 +1,14 @@
 package game
 
 import (
-	"bufio"
 	"go-maze/pkg/cave"
 	"image/color"
 	"log"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"github.com/sqweek/dialog"
 )
 
 const (
@@ -111,56 +105,6 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return outsideWidth, outsideHeight
 }
 
-func (g *Game) LoadCaveFromFile(filename string) {
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	if scanner.Scan() {
-		dimensions := strings.Fields(scanner.Text())
-		if len(dimensions) != 2 {
-			log.Fatal("Неверный формат файла: первая строка должна содержать размеры пещеры.")
-		}
-
-		width, err := strconv.Atoi(dimensions[0])
-		if err != nil || width > maxCaveSize {
-			log.Fatal("Неверная ширина пещеры.")
-		}
-
-		height, err := strconv.Atoi(dimensions[1])
-		if err != nil || height > maxCaveSize {
-			log.Fatal("Неверная высота пещеры.")
-		}
-
-		g.width, g.height = width, height
-		g.cellSize = float32(caveWidth) / float32(width)
-		g.cave = cave.NewCave(width, height)
-
-		for y := 0; y < height; y++ {
-			if scanner.Scan() {
-				row := strings.Fields(scanner.Text())
-				if len(row) != width {
-					log.Fatal("Неверный формат файла: количество столбцов не совпадает с заданной шириной.")
-				}
-				for x, cell := range row {
-					if cell == "0" {
-						g.cave.Grid[y][x] = cave.Death
-					} else if cell == "1" {
-						g.cave.Grid[y][x] = cave.Alive
-					} else {
-						log.Fatal("Неверный символ в пещере: должен быть 0 или 1.")
-					}
-				}
-			}
-		}
-	}
-	g.autoStepActive = false
-}
-
 func (g *Game) Step() {
 	newGrid := make([][]cave.Cell, g.cave.Height)
 	for i := range newGrid {
@@ -187,66 +131,6 @@ func (g *Game) Step() {
 
 	g.cave.Grid = newGrid
 }
-
-func (g *Game) drawCaveBorder(screen *ebiten.Image) {
-	borderColor := color.RGBA{255, 255, 255, 255}
-	vector.StrokeLine(screen, 0, 0, caveWidth, 0, borderThickness, borderColor, true)
-	vector.StrokeLine(screen, 0, caveHeight, caveWidth, caveHeight, borderThickness, borderColor, true)
-	vector.StrokeLine(screen, 0, 0, 0, caveHeight, borderThickness, borderColor, true)
-	vector.StrokeLine(screen, caveWidth, 0, caveWidth, caveHeight, borderThickness, borderColor, true)
-}
-
-func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float32, color color.RGBA) {
-	buttonWidth := float32(caveWidth + borderThickness*2)
-	buttonHeight := float32(30)
-
-	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, buttonHeight, color, false)
-
-	textWidth := float32(len(buttonText) * 8)
-	textHeight := float32(16)
-
-	textX := (buttonWidth - textWidth) / 2
-	textY := buttonY + (buttonHeight-textHeight)/2
-
-	ebitenutil.DebugPrintAt(screen, buttonText, int(textX), int(textY))
-}
-
-func (g *Game) drawControlButtons(screen *ebiten.Image) {
-	buttonY := float32(caveHeight + borderThickness + buttonHeight)
-
-	g.drawButton(screen, "Generate Cave", float32(caveHeight+borderThickness), color.RGBA{0, 0, 155, 255})
-	nextStepButtonY := buttonY
-	g.drawButton(screen, "Next Step", nextStepButtonY, color.RGBA{0, 155, 0, 255})
-	autoStepButtonY := nextStepButtonY + buttonHeight
-	g.drawButton(screen, "Auto Step", autoStepButtonY, color.RGBA{155, 0, 0, 255})
-}
-
-func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float32) bool {
-	buttonX := float32(0)
-	buttonWidth := float32(caveWidth + borderThickness*2)
-	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
-}
-
-func (g *Game) ShowFileSelector() {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Println("Ошибка при получении текущей директории:", err)
-		return
-	}
-
-	filename, err := dialog.File().
-		Filter("Text files", "txt").
-		SetStartDir(currentDir).
-		Load()
-
-	if err != nil {
-		log.Println("Ошибка при выборе файла:", err)
-		return
-	}
-
-	g.LoadCaveFromFile(filename)
-}
-
 func (g *Game) PrintCave() {
 	g.cave.Print()
 }
