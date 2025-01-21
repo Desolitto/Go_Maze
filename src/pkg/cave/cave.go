@@ -1,4 +1,4 @@
-package maze
+package cave
 
 import (
 	"fmt"
@@ -13,26 +13,25 @@ const (
 	Alive
 )
 
-type Maze struct {
+type Cave struct {
 	Grid          [][]Cell
 	Width, Height int
 }
 
-// NewMaze создает новый лабиринт с заданными размерами
-func NewMaze(width, height int) *Maze {
-	maze := &Maze{
+func NewCave(width, height int) *Cave {
+	cave := &Cave{
 		Grid:   make([][]Cell, height),
 		Width:  width,
 		Height: height,
 	}
-	for i := range maze.Grid {
-		maze.Grid[i] = make([]Cell, width)
+	for i := range cave.Grid {
+		cave.Grid[i] = make([]Cell, width)
 	}
-	return maze
+	return cave
 }
 
 // GenerateCave генерирует пещеру с использованием клеточного автомата// GenerateCave генерирует пещеру с использованием клеточного автомата
-func (m *Maze) GenerateCave(initialChance, birthLimit, deathLimit int) {
+func (m *Cave) GenerateCave(initialChance, birthLimit, deathLimit int) {
 	// Инициализация случайных клеток
 	for y := 1; y < m.Height-1; y++ {
 		for x := 1; x < m.Width-1; x++ {
@@ -71,7 +70,7 @@ func (m *Maze) GenerateCave(initialChance, birthLimit, deathLimit int) {
 }
 
 // CountWallsAround считает количество стен вокруг клетки
-func (m *Maze) CountAliveAround(x, y int) int {
+func (m *Cave) CountAliveAround(x, y int) int {
 	count := 0
 	for dy := -1; dy <= 1; dy++ {
 		for dx := -1; dx <= 1; dx++ {
@@ -89,27 +88,7 @@ func (m *Maze) CountAliveAround(x, y int) int {
 	return count
 }
 
-// func (m *Maze) CountAliveAround(x, y int) int {
-// 	count := 0
-// 	for dy := -1; dy <= 1; dy++ {
-// 		for dx := -1; dx <= 1; dx++ {
-// 			if dx == 0 && dy == 0 {
-// 				continue // Пропускаем саму клетку
-// 			}
-// 			nx, ny := x+dx, y+dy
-
-// 			// Проверяем, что индексы находятся в пределах границ
-// 			if nx >= 0 && nx < m.Width && ny >= 0 && ny < m.Height {
-// 				if m.Grid[ny][nx] == Alive {
-// 					count++
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return count
-// }
-
-func (m *Maze) Print() {
+func (m *Cave) Print() {
 	for y := 0; y < m.Height; y++ {
 		for x := 0; x < m.Width; x++ {
 			if m.Grid[y][x] == Alive {

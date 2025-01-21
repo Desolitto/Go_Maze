@@ -3,7 +3,7 @@ package game
 import (
 	"bufio"
 	"fmt"
-	"go-maze/pkg/maze"
+	"go-maze/pkg/cave"
 	"image/color"
 	"log"
 	"os"
@@ -33,7 +33,7 @@ var colorDeath = color.RGBA{255, 255, 255, 255}
 
 type Game struct {
 	width, height    int
-	cave             *maze.Maze
+	cave             *cave.Cave
 	cellSize         float32 // Размер ячейки
 	stepMode         bool    // Режим пошаговой отрисовки
 	birthLimit       int
@@ -50,7 +50,7 @@ func NewGame(w, h, birthLimit, deathLimit, initialChance int) *Game {
 	ebiten.SetWindowSize(caveWidth+int(borderThickness*2), caveHeight+buttonHeight*3+int(borderThickness))
 	ebiten.SetWindowTitle("Cave Generator")
 	cellSize := float32(caveWidth) / float32(w)
-	cave := maze.NewMaze(w, h)
+	cave := cave.NewCave(w, h)
 	cave.GenerateCave(initialChance, birthLimit, deathLimit) // Генерация лабиринта
 	return &Game{
 		width:            w,
@@ -111,7 +111,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Рисуем лабиринт в области
 	for y, row := range g.cave.Grid {
 		for x, cell := range row {
-			if cell == maze.Alive {
+			if cell == cave.Alive {
 				vector.DrawFilledRect(screen, caveX+float32(x)*g.cellSize+2, caveY+float32(y)*g.cellSize+2, g.cellSize-wallThickness, g.cellSize-wallThickness, colorAlive, false)
 			}
 		}
@@ -152,7 +152,7 @@ func (g *Game) LoadCaveFromFile(filename string) {
 
 		g.width, g.height = width, height
 		g.cellSize = float32(caveWidth) / float32(width)
-		g.cave = maze.NewMaze(width, height)
+		g.cave = cave.NewCave(width, height)
 
 		// Читаем содержимое пещеры
 		for y := 0; y < height; y++ {
@@ -163,9 +163,9 @@ func (g *Game) LoadCaveFromFile(filename string) {
 				}
 				for x, cell := range row {
 					if cell == "0" {
-						g.cave.Grid[y][x] = maze.Death
+						g.cave.Grid[y][x] = cave.Death
 					} else if cell == "1" {
-						g.cave.Grid[y][x] = maze.Alive
+						g.cave.Grid[y][x] = cave.Alive
 					} else {
 						log.Fatal("Неверный символ в пещере: должен быть 0 или 1.")
 					}
@@ -177,9 +177,9 @@ func (g *Game) LoadCaveFromFile(filename string) {
 }
 
 func (g *Game) Step() {
-	newGrid := make([][]maze.Cell, g.cave.Height)
+	newGrid := make([][]cave.Cell, g.cave.Height)
 	for i := range newGrid {
-		newGrid[i] = make([]maze.Cell, g.cave.Width)
+		newGrid[i] = make([]cave.Cell, g.cave.Width)
 	}
 
 	fmt.Println("Состояние матрицы перед шагом:")
@@ -190,17 +190,17 @@ func (g *Game) Step() {
 			wallCount := g.cave.CountAliveAround(x, y)
 			fmt.Printf("Клетка (%d, %d), wallCount: %d\n", x, y, wallCount)
 
-			if g.cave.Grid[y][x] == maze.Alive { // Если клетка живая
+			if g.cave.Grid[y][x] == cave.Alive { // Если клетка живая
 				if wallCount < g.deathLimit {
-					newGrid[y][x] = maze.Death // Клетка умирает
+					newGrid[y][x] = cave.Death // Клетка умирает
 				} else {
-					newGrid[y][x] = maze.Alive // Остается живой
+					newGrid[y][x] = cave.Alive // Остается живой
 				}
 			} else { // Если клетка мертвая
 				if wallCount > g.birthLimit {
-					newGrid[y][x] = maze.Alive // Клетка становится живой
+					newGrid[y][x] = cave.Alive // Клетка становится живой
 				} else {
-					newGrid[y][x] = maze.Death // Остается мертвой
+					newGrid[y][x] = cave.Death // Остается мертвой
 				}
 			}
 		}
@@ -217,58 +217,6 @@ func (g *Game) drawCaveBorder(screen *ebiten.Image) {
 	vector.StrokeLine(screen, 0, caveHeight, caveWidth, caveHeight, borderThickness, borderColor, true)
 	vector.StrokeLine(screen, 0, 0, 0, caveHeight, borderThickness, borderColor, true)
 	vector.StrokeLine(screen, caveWidth, 0, caveWidth, caveHeight, borderThickness, borderColor, true)
-}
-
-// func (g *Game) drawButton(screen *ebiten.Image) {
-// 	buttonWidth := float32(caveWidth + borderThickness*2) // Кнопка на всю ширину
-// 	buttonY := float32(caveHeight + borderThickness)      // Позиция Y
-
-// 	// Рисуем кнопку
-// 	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, buttonHeight, color.RGBA{0, 0, 155, 255}, false)
-
-// 	// Определяем текст и его размеры
-// 	buttonText := "Generate Cave"
-// 	textWidth := float32(len(buttonText) * 8) // Оценка ширины текста
-// 	textHeight := float32(16)                 // Высота текста
-
-// 	// Вычисляем координаты для центрирования текста
-// 	textX := (buttonWidth - textWidth) / 2
-// 	textY := buttonY + (buttonHeight-textHeight)/2
-
-// 	// Рисуем текст на кнопке
-// 	ebitenutil.DebugPrintAt(screen, buttonText, int(textX), int(textY)) // Отрисовка текста
-// }
-
-// func (g *Game) isInsideButton(x, y float32) bool {
-// 	buttonX := float32(0)                                 // Начинаем с нуля по X
-// 	buttonY := float32(caveHeight + borderThickness)      // Позиция Y
-// 	buttonWidth := float32(caveWidth + borderThickness*2) // Кнопка на всю ширину
-// 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
-// }
-
-// func (g *Game) drawControlButtons(screen *ebiten.Image) {
-// 	buttonWidth := float32(caveWidth + borderThickness*2)
-// 	buttonY := float32(caveHeight + borderThickness + buttonHeight) // Начальная позиция Y для первой кнопки
-
-// 	// Кнопка для следующего шага
-// 	nextStepButtonY := buttonY
-// 	vector.DrawFilledRect(screen, 0, nextStepButtonY, buttonWidth, buttonHeight, color.RGBA{0, 155, 0, 255}, false)
-// 	ebitenutil.DebugPrintAt(screen, "Next Step", 10, int(nextStepButtonY)+5)
-
-// 	// Кнопка для автоматического шага
-// 	autoStepButtonY := nextStepButtonY + buttonHeight // Кнопка сразу под первой
-// 	vector.DrawFilledRect(screen, 0, autoStepButtonY, buttonWidth, buttonHeight, color.RGBA{155, 0, 0, 255}, false)
-// 	ebitenutil.DebugPrintAt(screen, "Auto Step", 10, int(autoStepButtonY)+5)
-// }
-
-// func (g *Game) isInsideControlButton(x, y float32, buttonY float32) bool {
-// 	buttonX := float32(0)
-// 	buttonWidth := float32(caveWidth + borderThickness*2)
-// 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
-// }
-
-func (g *Game) PrintCave() {
-	g.cave.Print() // Вызываем метод Print на структуре Maze
 }
 
 func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float32, color color.RGBA) {
@@ -332,4 +280,8 @@ func (g *Game) ShowFileSelector() {
 
 	g.LoadCaveFromFile(filename) // Загружаем выбранный файл
 	fmt.Println("Выбранный файл:", filename)
+}
+
+func (g *Game) PrintCave() {
+	g.cave.Print()
 }
