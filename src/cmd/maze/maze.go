@@ -519,3 +519,83 @@
 // 		}
 // 	}
 // }
+
+// func LoadMaze(filename string) (*Maze, error) {
+// 	file, err := os.Open(filename)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("ошибка при открытии файла: %v", err)
+// 	}
+// 	defer file.Close()
+
+// 	scanner := bufio.NewScanner(file)
+
+// 	// Читаем размеры лабиринта
+// 	if !scanner.Scan() {
+// 		return nil, fmt.Errorf("ошибка при чтении размеров лабиринта: %v", scanner.Err())
+// 	}
+// 	var rows, cols int
+// 	_, err = fmt.Sscanf(scanner.Text(), "%d %d", &rows, &cols)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("ошибка при парсинге размеров лабиринта: %v", err)
+// 	}
+// 	fmt.Printf("Размеры лабиринта: %d строк, %d столбцов\n", rows, cols)
+
+// 	maze := &Maze{
+// 		Rows:  rows,
+// 		Cols:  cols,
+// 		Cells: make([][]Cell, rows),
+// 	}
+
+// 	for i := range maze.Cells {
+// 		maze.Cells[i] = make([]Cell, cols)
+// 	}
+
+// 	// Читаем первую матрицу (стенки справа)
+// 	for y := 0; y < rows; y++ {
+// 		if !scanner.Scan() {
+// 			return nil, fmt.Errorf("ошибка при чтении стенок справа в строке %d: %v", y, scanner.Err())
+// 		}
+// 		for x := 0; x < cols; x++ {
+// 			var wall int
+// 			_, err = fmt.Sscanf(scanner.Text()[x*2:x*2+1], "%d", &wall) // Предполагаем, что данные разделены пробелами
+// 			if err != nil {
+// 				return nil, fmt.Errorf("ошибка при парсинге стенки справа в строке %d, столбце %d: %v", y, x, err)
+// 			}
+// 			if wall == 1 {
+// 				maze.Cells[y][x].Right = true
+
+// 			} // } else {
+// 			// 	// Если стенки нет, помечаем ячейку как посещенную
+// 			// 	maze.Cells[y][x].Visited = true
+// 			// }
+// 			fmt.Printf("Строка %d, столбец %d: стенка справа = %d\n", y, x, wall)
+// 		}
+// 	}
+
+// 	// Пропускаем пустую строку между матрицами
+// 	if !scanner.Scan() {
+// 		return nil, fmt.Errorf("ошибка при чтении пустой строки между матрицами: %v", scanner.Err())
+// 	}
+
+// 	// Читаем вторую матрицу (стенки снизу)
+// 	for y := 0; y < rows; y++ {
+// 		if !scanner.Scan() {
+// 			return nil, fmt.Errorf("ошибка при чтении стенок снизу в строке %d: %v", y, scanner.Err())
+// 		}
+// 		for x := 0; x < cols; x++ {
+// 			var wall int
+// 			_, err = fmt.Sscanf(scanner.Text()[x*2:x*2+1], "%d", &wall) // Предполагаем, что данные разделены пробелами
+// 			if err != nil {
+// 				return nil, fmt.Errorf("ошибка при парсинге стенки снизу в строке %d, столбце %d: %v", y, x, err)
+// 			}
+// 			if wall == 1 {
+// 				maze.Cells[y][x].Bottom = true
+// 			}
+// 			maze.Cells[y][x].Visited = true
+// 			fmt.Printf("Строка %d, столбец %d: стенка снизу = %d\n", y, x, wall)
+// 		}
+// 	}
+
+// 	fmt.Println("Загрузка лабиринта завершена успешно.")
+// 	return maze, nil
+// }
