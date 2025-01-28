@@ -102,10 +102,251 @@ func (m *Maze) Generate(x, y int) {
 	}
 }
 
+func (m *Maze) GenerateEller() {
+	// Инициализация наборов для первой строки
+	sets := make([]int, m.Cols)
+	for j := range sets {
+		sets[j] = j // Каждая ячейка начинает в своем собственном наборе
+	}
+
+	for y := 0; y < m.Rows; y++ {
+		// Генерация горизонтальных соединений
+		for x := 0; x < m.Cols-1; x++ {
+			if rand.Intn(2) == 0 { // С вероятностью 50% удаляем стену справа
+				if sets[x] != sets[x+1] {
+					m.Cells[y][x].Right = false
+					mergeSets(sets, sets[x], sets[x+1])
+				}
+			}
+		}
+
+		// Генерация вертикальных соединений
+		nextRowSets := make([]int, m.Cols)
+		for x := 0; x < m.Cols; x++ {
+			m.Cells[y][x].Visited = true
+			if y < m.Rows-1 { // Если это не последняя строка
+				if rand.Intn(2) == 0 || isLastInSet(sets, x) {
+					m.Cells[y][x].Bottom = false
+					nextRowSets[x] = sets[x]
+				} else {
+					nextRowSets[x] = -1 // Новый набор для следующей строки
+				}
+			}
+		}
+
+		// Если это не последняя строка, обновляем наборы
+		if y < m.Rows-1 {
+			for x := 0; x < m.Cols; x++ {
+				if nextRowSets[x] == -1 {
+					nextRowSets[x] = maxSetID(sets) + 1
+				}
+			}
+			sets = nextRowSets
+		}
+	}
+
+	// Объединение всех наборов в последней строке
+	for x := 0; x < m.Cols-1; x++ {
+		if sets[x] != sets[x+1] {
+			m.Cells[m.Rows-1][x].Right = false
+			mergeSets(sets, sets[x], sets[x+1])
+		}
+	}
+	if !isFullyConnected(m) {
+		createPassages(m)
+	}
+
+}
+
+// Вспомогательные функции
+
+func createPassages(m *Maze) {
+	// Логика для создания проходов между ячейками
+	visited := make([][]bool, m.Rows)
+	for i := range visited {
+		visited[i] = make([]bool, m.Cols)
+	}
+
+	var dfs func(y, x int)
+	dfs = func(y, x int) {
+		if y < 0 || y >= m.Rows || x < 0 || x >= m.Cols || visited[y][x] {
+			return
+		}
+		visited[y][x] = true
+		if !m.Cells[y][x].Right {
+			dfs(y, x+1)
+		}
+		if !m.Cells[y][x].Bottom {
+			dfs(y+1, x)
+		}
+		if x > 0 && !m.Cells[y][x-1].Right {
+			dfs(y, x-1)
+		}
+		if y > 0 && !m.Cells[y-1][x].Bottom {
+			dfs(y-1, x)
+		}
+	}
+
+	// Запускаем DFS из первой ячейки
+	dfs(0, 0)
+
+	// Находим все ячейки и создаем проходы
+	for y := 0; y < m.Rows; y++ {
+		for x := 0; x < m.Cols; x++ {
+			if visited[y][x] {
+				// Проверяем соседние ячейки для создания проходов
+				if y < m.Rows-1 && !visited[y+1][x] {
+					m.Cells[y][x].Bottom = false // Создаем проход вниз
+					fmt.Printf("Создан проход вниз между (%d, %d) и (%d, %d)\n", y, x, y+1, x)
+				}
+				if x < m.Cols-1 && !visited[y][x+1] {
+					m.Cells[y][x].Right = false // Создаем проход вправо
+					fmt.Printf("Создан проход вправо между (%d, %d) и (%d, %d)\n", y, x, y, x+1)
+				}
+			}
+		}
+	}
+}
+
+func isFullyConnected(m *Maze) bool {
+	visited := make([][]bool, m.Rows)
+	for i := range visited {
+		visited[i] = make([]bool, m.Cols)
+	}
+
+	var dfs func(y, x int)
+	dfs = func(y, x int) {
+		if y < 0 || y >= m.Rows || x < 0 || x >= m.Cols || visited[y][x] {
+			return
+		}
+		visited[y][x] = true
+		if !m.Cells[y][x].Right {
+			dfs(y, x+1)
+		}
+		if !m.Cells[y][x].Bottom {
+			dfs(y+1, x)
+		}
+		if x > 0 && !m.Cells[y][x-1].Right {
+			dfs(y, x-1)
+		}
+		if y > 0 && !m.Cells[y-1][x].Bottom {
+			dfs(y-1, x)
+		}
+	}
+
+	// Запускаем DFS из первой ячейки
+	dfs(0, 0)
+
+	// Проверяем, все ли ячейки посещены
+	for y := 0; y < m.Rows; y++ {
+		for x := 0; x < m.Cols; x++ {
+			if !visited[y][x] {
+				fmt.Printf("Ячейка не посещена: (%d, %d)\n", y, x)
+				return false
+			}
+		}
+	}
+	fmt.Println("Все ячейки посещены!")
+	return true
+}
+
+// mergeSets объединяет два набора
+func mergeSets(sets []int, fromSet, toSet int) {
+	for i := range sets {
+		if sets[i] == fromSet {
+			sets[i] = toSet
+		}
+	}
+}
+
+// isLastInSet проверяет, является ли ячейка последней в своем наборе
+func isLastInSet(sets []int, x int) bool {
+	for i := x + 1; i < len(sets); i++ {
+		if sets[i] == sets[x] {
+			return false
+		}
+	}
+	return true
+}
+
+// maxSetID возвращает максимальный идентификатор набора
+func maxSetID(sets []int) int {
+	maxID := sets[0]
+	for _, id := range sets {
+		if id > maxID {
+			maxID = id
+		}
+	}
+	return maxID
+}
+
+// func (m *Maze) GenerateEller() {
+// 	sets := make([]int, m.Cols)
+// 	for j := range sets {
+// 		sets[j] = j // Каждая ячейка начинает в своем собственном наборе
+// 	}
+// 	fmt.Println(m.Rows, m.Cols)
+// 	for y := 0; y < m.Rows; y++ {
+// 		for x := 0; x < m.Cols; x++ {
+// 			m.Cells[y][x].Visited = true
+
+// 			// Удаляем стенку справа с вероятностью 50%
+// 			if x < m.Cols-1 && rand.Intn(2) == 0 {
+// 				m.Cells[y][x].Right = false
+// 				// 	// Объединяем наборы
+// 				sets[x+1] = sets[x]
+// 			}
+
+// 			// // Удаляем стенку снизу с вероятностью 50%
+// 			if y < m.Rows-1 && (x == 0 || rand.Intn(2) == 0) {
+// 				m.Cells[y][x].Bottom = false
+// 				// Объединяем наборы
+// 				sets[x] = sets[x]
+// 			}
+// 		}
+
+// 		// Объединяем наборы после обработки строки
+// 		for x := 1; x < m.Cols; x++ {
+// 			if sets[x] != sets[x-1] {
+// 				oldSet := sets[x]
+// 				for j := x; j < m.Cols; j++ {
+// 					if sets[j] == oldSet {
+// 						sets[j] = sets[x-1]
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+
+// 	for y := 0; y < m.Rows; y++ {
+// 		for x := 0; x < m.Cols; x++ {
+// 			if m.Cells[y][x].Right {
+// 				fmt.Print("1 ")
+// 			} else {
+// 				fmt.Print("0 ")
+// 			}
+// 		}
+// 		fmt.Println()
+// 	}
+// 	fmt.Println("")
+// 	for y := 0; y < m.Rows; y++ {
+// 		for x := 0; x < m.Cols; x++ {
+// 			if m.Cells[y][x].Bottom {
+// 				fmt.Print("1 ")
+// 			} else {
+// 				fmt.Print("0 ")
+// 			}
+// 		}
+// 		fmt.Println()
+// 	}
+// }
+
 func NewGame(rows, cols int) *Game {
 	maze := NewMaze(rows, cols)
 	maze.Initialize(rows, cols)
-	maze.Generate(0, 0)
+	// maze.Generate(0, 0)
+	maze.GenerateEller()
 	cellSize := float32(mazeWidth) / float32(cols)
 	return &Game{maze: maze, cellSize: cellSize}
 }

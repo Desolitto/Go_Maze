@@ -599,3 +599,105 @@
 // 	fmt.Println("Загрузка лабиринта завершена успешно.")
 // 	return maze, nil
 // }
+
+// func (m *Maze) GenerateEuler() {
+// 	setMatrix := make([][]int, m.Rows)
+// 	for i := range setMatrix {
+// 		setMatrix[i] = make([]int, m.Cols)
+// 	}
+
+// 	activeRow := 0
+// 	setCounter := 1
+
+// 	for activeRow < m.Rows {
+// 		m.assignUniqueSet(setMatrix, activeRow, &setCounter)
+// 		m.addingVerticalWalls(setMatrix, activeRow)
+// 		m.addingHorizontalWalls(setMatrix, activeRow)
+// 		m.preparatingNewLine(setMatrix, activeRow)
+// 		activeRow++
+// 	}
+
+// 	// Вызываем добавление последней стены только для последней строки
+// 	if activeRow > 0 {
+// 		m.addingEndLine(setMatrix, activeRow-1) // Передаем предыдущую строку
+// 	}
+// }
+
+// func (m *Maze) assignUniqueSet(setMatrix [][]int, activeRow int, setCounter *int) {
+// 	for j := 0; j < m.Cols; j++ {
+// 		if setMatrix[activeRow][j] == 0 {
+// 			setMatrix[activeRow][j] = *setCounter
+// 			*setCounter++
+// 		}
+// 	}
+// }
+
+// // Добавление вертикальных стен
+// func (m *Maze) addingVerticalWalls(setMatrix [][]int, activeRow int) {
+// 	for i := 0; i < m.Cols-1; i++ {
+// 		choice := rand.Intn(2)
+// 		if choice == 1 || setMatrix[activeRow][i] == setMatrix[activeRow][i+1] {
+// 			m.Cells[activeRow][i].Right = true
+// 		} else {
+// 			m.mergeSet(setMatrix, activeRow, i)
+// 		}
+// 	}
+// }
+
+// // Объединение ячеек в одно множество
+// func (m *Maze) mergeSet(setMatrix [][]int, activeRow int, i int) {
+// 	x := setMatrix[activeRow][i+1]
+// 	for j := 0; j < m.Cols; j++ {
+// 		if setMatrix[activeRow][j] == x {
+// 			setMatrix[activeRow][j] = setMatrix[activeRow][i]
+// 		}
+// 	}
+// }
+
+// // Добавление горизонтальных стен
+// func (m *Maze) addingHorizontalWalls(setMatrix [][]int, activeRow int) {
+// 	for i := 0; i < m.Cols; i++ {
+// 		choice := rand.Intn(2)
+// 		if choice == 1 && m.checkedHorizontalWalls(setMatrix, activeRow, i) {
+// 			m.Cells[activeRow][i].Bottom = true
+// 		}
+// 	}
+// }
+
+// // Проверка, что множества не закрыты нижними стенами
+// func (m *Maze) checkedHorizontalWalls(setMatrix [][]int, activeRow int, index int) bool {
+// 	set := setMatrix[activeRow][index]
+// 	for i := 0; i < m.Cols; i++ {
+// 		if setMatrix[activeRow][i] == set && i != index && !m.Cells[activeRow][i].Bottom {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
+
+// func (m *Maze) preparatingNewLine(setMatrix [][]int, activeRow int) {
+// 	if activeRow == m.Rows-1 {
+// 		return
+// 	}
+// 	for i := 0; i < m.Cols; i++ {
+// 		if !m.Cells[activeRow][i].Bottom {
+// 			setMatrix[activeRow+1][i] = setMatrix[activeRow][i]
+// 		} else {
+// 			setMatrix[activeRow+1][i] = 0
+// 		}
+// 	}
+// }
+
+// // Добавление последней стены лабиринта
+// func (m *Maze) addingEndLine(setMatrix [][]int, activeRow int) {
+// 	if activeRow >= m.Rows { // Проверка, чтобы не выходить за пределы
+// 		return
+// 	}
+// 	for i := 0; i < m.Cols-1; i++ {
+// 		m.Cells[activeRow][i].Bottom = true
+// 		if setMatrix[activeRow][i] != setMatrix[activeRow][i+1] {
+// 			m.Cells[activeRow][i].Right = false
+// 			m.mergeSet(setMatrix, activeRow, i)
+// 		}
+// 	}
+// }
