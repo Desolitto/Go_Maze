@@ -701,3 +701,65 @@
 // 		}
 // 	}
 // }
+
+// func (m *Maze) GenerateEller() {
+// 	sets := make([]int, m.Cols)
+// 	for j := range sets {
+// 		sets[j] = j // Каждая ячейка начинает в своем собственном наборе
+// 	}
+// 	fmt.Println(m.Rows, m.Cols)
+// 	for y := 0; y < m.Rows; y++ {
+// 		for x := 0; x < m.Cols; x++ {
+// 			m.Cells[y][x].Visited = true
+
+// 			// Удаляем стенку справа с вероятностью 50%
+// 			if x < m.Cols-1 && rand.Intn(2) == 0 {
+// 				m.Cells[y][x].Right = false
+// 				// 	// Объединяем наборы
+// 				sets[x+1] = sets[x]
+// 			}
+
+// 			// // Удаляем стенку снизу с вероятностью 50%
+// 			if y < m.Rows-1 && (x == 0 || rand.Intn(2) == 0) {
+// 				m.Cells[y][x].Bottom = false
+// 				// Объединяем наборы
+// 				sets[x] = sets[x]
+// 			}
+// 		}
+
+// 		// Объединяем наборы после обработки строки
+// 		for x := 1; x < m.Cols; x++ {
+// 			if sets[x] != sets[x-1] {
+// 				oldSet := sets[x]
+// 				for j := x; j < m.Cols; j++ {
+// 					if sets[j] == oldSet {
+// 						sets[j] = sets[x-1]
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+
+// 	for y := 0; y < m.Rows; y++ {
+// 		for x := 0; x < m.Cols; x++ {
+// 			if m.Cells[y][x].Right {
+// 				fmt.Print("1 ")
+// 			} else {
+// 				fmt.Print("0 ")
+// 			}
+// 		}
+// 		fmt.Println()
+// 	}
+// 	fmt.Println("")
+// 	for y := 0; y < m.Rows; y++ {
+// 		for x := 0; x < m.Cols; x++ {
+// 			if m.Cells[y][x].Bottom {
+// 				fmt.Print("1 ")
+// 			} else {
+// 				fmt.Print("0 ")
+// 			}
+// 		}
+// 		fmt.Println()
+// 	}
+// }

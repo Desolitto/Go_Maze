@@ -8,6 +8,7 @@
 // 	"log"
 // 	"math/rand"
 // 	"os"
+// 	"time"
 
 // 	"github.com/hajimehoshi/ebiten/v2"
 // 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -42,33 +43,13 @@
 // 	loadButton bool
 // }
 
-// // func NewMaze(rows, cols int) *Maze {
-// // 	ebiten.SetWindowSize(mazeWidth+int(borderThickness*2), mazeHeight+buttonHeight+int(borderThickness))
-// // 	cells := make([][]Cell, rows)
-// // 	for i := range cells {
-// // 		cells[i] = make([]Cell, cols)
-// // 		for j := range cells[i] {
-// // 			cells[i][j] = Cell{Visited: false, Right: true, Bottom: true}
-// // 		}
-// // 	}
-// // 	return &Maze{Rows: rows, Cols: cols, Cells: cells}
-// // }
-
-// // func NewMaze(rows, cols int) *Maze {
-// // 	ebiten.SetWindowSize(mazeWidth+int(borderThickness*2), mazeHeight+buttonHeight+int(borderThickness))
-
-// //		cells := make([][]Cell, rows)
-// //		for i := range cells {
-// //			cells[i] = make([]Cell, cols)
-// //		}
-// //		return &Maze{Rows: rows, Cols: cols, Cells: cells}
-// //	}
 // func NewMaze(rows, cols int) *Maze {
+// 	ebiten.SetWindowSize(mazeWidth+int(borderThickness*2), mazeHeight+buttonHeight+int(borderThickness))
 // 	cells := make([][]Cell, rows)
 // 	for i := range cells {
 // 		cells[i] = make([]Cell, cols)
 // 		for j := range cells[i] {
-// 			cells[i][j] = Cell{Visited: false, Right: true, Bottom: true, Set: i*cols + j}
+// 			cells[i][j] = Cell{Visited: false, Right: true, Bottom: true}
 // 		}
 // 	}
 // 	return &Maze{Rows: rows, Cols: cols, Cells: cells}
@@ -91,7 +72,7 @@
 // }
 
 // func (m *Maze) Generate(x, y int) {
-// 	// m.Cells[y][x].Visited = true
+// 	m.Cells[y][x].Visited = true
 
 // 	directions := []struct {
 // 		dx, dy int
@@ -123,113 +104,341 @@
 // 	}
 // }
 
-// func (m *Maze) printRow(row int) {
-// 	fmt.Printf("Row %d:\n", row)
-// 	for col := 0; col < m.Cols; col++ {
-// 		fmt.Printf("Cell (%d, %d): Set=%d, Right=%t, Bottom=%t\n",
-// 			row, col, m.Cells[row][col].Set, m.Cells[row][col].Right, m.Cells[row][col].Bottom)
+// func debugPrintSets(m *Maze, y int) {
+// 	fmt.Printf("Row %d sets: ", y)
+// 	for x := 0; x < m.Cols; x++ {
+// 		fmt.Printf("%d ", m.Cells[y][x].Set)
 // 	}
 // 	fmt.Println()
 // }
 
-// // func (m *Maze) GenerateEller() {
-// // 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-// // 	for row := 0; row < m.Rows; row++ {
-// // 		// Step 1: Initialize the sets for each cell in the current row
-// // 		sets := make(map[int]int)
-// // 		nextSetID := 1
-// // 		for col := 0; col < m.Cols; col++ {
-// // 			if row == 0 || m.Cells[row-1][col].Set == 0 {
-// // 				sets[col] = nextSetID
-// // 				m.Cells[row][col].Set = nextSetID
-// // 				nextSetID++
-// // 			} else {
-// // 				m.Cells[row][col].Set = m.Cells[row-1][col].Set
-// // 			}
-// // 		}
-// // 		// Print initial sets for the row
-// // 		fmt.Printf("Initial sets for Row %d:\n", row)
-// // 		for col := 0; col < m.Cols; col++ {
-// // 			fmt.Printf("Cell (%d, %d): Set=%d\n", row, col, m.Cells[row][col].Set)
-// // 		}
-// // 		fmt.Println()
+// func (m *Maze) GenerateEller() {
+// 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-// // 		// Step 2: Decide whether to create vertical walls between cells in the same row
-// // 		for col := 0; col < m.Cols-1; col++ {
-// // 			if r.Float32() < 0.5 {
-// // 				if m.Cells[row][col].Set != m.Cells[row][col+1].Set {
-// // 					mergeSets(sets, m.Cells[row][col].Set, m.Cells[row][col+1].Set)
-// // 					m.Cells[row][col].Right = false
-// // 					fmt.Printf("No right wall between (%d, %d) and (%d, %d), merged sets %d and %d\n",
-// // 						row, col, row, col+1, m.Cells[row][col].Set, m.Cells[row][col+1].Set)
-// // 				} else {
-// // 					m.Cells[row][col].Right = true
-// // 					fmt.Printf("Right wall between (%d, %d) and (%d, %d)\n", row, col, row, col+1)
-// // 				}
-// // 			} else {
-// // 				m.Cells[row][col].Right = true
-// // 				fmt.Printf("Right wall between (%d, %d) and (%d, %d)\n", row, col, row, col+1)
-// // 			}
-// // 		}
-
-// // 		// Step 3: Decide whether to create horizontal walls between cells in the same column
-// // 		if row < m.Rows-1 {
-// // 			horizWalls := make([]bool, m.Cols)
-// // 			setCounts := make(map[int]int)
-// // 			for col := 0; col < m.Cols; col++ {
-// // 				setCounts[m.Cells[row][col].Set]++
-// // 			}
-// // 			for col := 0; col < m.Cols; col++ {
-// // 				if setCounts[m.Cells[row][col].Set] > 1 && r.Float32() < 0.5 {
-// // 					horizWalls[col] = true
-// // 				} else {
-// // 					horizWalls[col] = false
-// // 					m.Cells[row][col].Bottom = false
-// // 					fmt.Printf("No bottom wall for cell (%d, %d)\n", row, col)
-// // 				}
-// // 			}
-// // 			for col := 0; col < m.Cols; col++ {
-// // 				if horizWalls[col] {
-// // 					m.Cells[row][col].Bottom = true
-// // 					fmt.Printf("Bottom wall for cell (%d, %d)\n", row, col)
-// // 				}
-// // 			}
-// // 		} else {
-// // 			// Last row: Remove all closed areas
-// // 			for col := 0; col < m.Cols-1; col++ {
-// // 				if m.Cells[row][col].Set != m.Cells[row][col+1].Set {
-// // 					m.Cells[row][col].Right = false
-// // 					mergeSets(sets, m.Cells[row][col].Set, m.Cells[row][col+1].Set)
-// // 					fmt.Printf("No right wall between (%d, %d) and (%d, %d), merged sets %d and %d\n",
-// // 						row, col, row, col+1, m.Cells[row][col].Set, m.Cells[row][col+1].Set)
-// // 				} else {
-// // 					m.Cells[row][col].Right = true
-// // 					fmt.Printf("Right wall between (%d, %d) and (%d, %d)\n", row, col, row, col+1)
-// // 				}
-// // 			}
-// // 		}
-
-// // 		// Print the state of the row after processing
-// // 		m.printRow(row)
-// // 	}
-// // }
-
-// func mergeSets(sets map[int]int, a, b int) {
-// 	target := sets[a]
-// 	replacement := sets[b]
-// 	if target == replacement {
-// 		return
+// 	// Инициализация множеств для первой строки
+// 	for x := 0; x < m.Cols; x++ {
+// 		m.Cells[0][x].Set = x + 1
 // 	}
-// 	for k, v := range sets {
-// 		if v == replacement {
-// 			sets[k] = target
+
+// 	// Обработка всех строк, кроме последней
+// 	for y := 0; y < m.Rows-1; y++ {
+// 		processRow(m, y, r)
+// 	}
+
+// 	// Обработка последней строки
+// 	processLastRow(m, r)
+
+// 	// Проверка связности лабиринта
+// 	if !isFullyConnected(m) {
+// 		fmt.Println("Лабиринт не является идеальным!")
+// 	} else {
+// 		fmt.Println("Лабиринт идеальный!")
+// 	}
+// }
+
+// func processRow(m *Maze, y int, r *rand.Rand) {
+// 	// Шаг 1: Удаление случайных правых стен
+// 	for x := 0; x < m.Cols-1; x++ {
+// 		if m.Cells[y][x].Set != m.Cells[y][x+1].Set && r.Float32() < 0.5 {
+// 			m.Cells[y][x].Right = false
+// 			mergeSets(m, y, x, x+1)
+// 		}
+// 	}
+
+// 	// Шаг 2: Удаление случайных нижних стен
+// 	nextSetID := maxSetID(m.Cells[y]) + 1
+// 	for x := 0; x < m.Cols; x++ {
+// 		if r.Float32() < 0.5 || isOnlyInSet(m, y, x) {
+// 			m.Cells[y][x].Bottom = false
+// 		} else {
+// 			// Передача множества в следующую строку
+// 			m.Cells[y+1][x].Set = m.Cells[y][x].Set
+// 		}
+
+// 		// Если множество в следующей строке еще не установлено, создаем новое
+// 		if m.Cells[y+1][x].Set == 0 {
+// 			m.Cells[y+1][x].Set = nextSetID
+// 			nextSetID++
 // 		}
 // 	}
 // }
 
+// func processLastRow(m *Maze, r *rand.Rand) {
+// 	for x := 0; x < m.Cols-1; x++ {
+// 		if m.Cells[m.Rows-1][x].Set != m.Cells[m.Rows-1][x+1].Set {
+// 			m.Cells[m.Rows-1][x].Right = false
+// 			mergeSets(m, m.Rows-1, x, x+1)
+// 		}
+// 	}
+// }
+
+// func mergeSets(m *Maze, y, x1, x2 int) {
+// 	setToMerge := m.Cells[y][x2].Set
+// 	targetSet := m.Cells[y][x1].Set
+
+// 	for x := 0; x < m.Cols; x++ {
+// 		if m.Cells[y][x].Set == setToMerge {
+// 			m.Cells[y][x].Set = targetSet
+// 		}
+// 	}
+// }
+
+// func isOnlyInSet(m *Maze, y, x int) bool {
+// 	set := m.Cells[y][x].Set
+// 	count := 0
+
+// 	for i := 0; i < m.Cols; i++ {
+// 		if m.Cells[y][i].Set == set {
+// 			count++
+// 			if count > 1 {
+// 				return false
+// 			}
+// 		}
+// 	}
+
+// 	return true
+// }
+// func maxSetID(row []Cell) int {
+// 	maxID := 0
+// 	for _, cell := range row {
+// 		if cell.Set > maxID {
+// 			maxID = cell.Set
+// 		}
+// 	}
+// 	return maxID
+// }
+
+// func isFullyConnected(m *Maze) bool {
+// 	visited := make([][]bool, m.Rows)
+// 	for i := range visited {
+// 		visited[i] = make([]bool, m.Cols)
+// 	}
+
+// 	var dfs func(y, x int)
+// 	dfs = func(y, x int) {
+// 		if y < 0 || y >= m.Rows || x < 0 || x >= m.Cols || visited[y][x] {
+// 			return
+// 		}
+// 		visited[y][x] = true
+// 		if !m.Cells[y][x].Right {
+// 			dfs(y, x+1)
+// 		}
+// 		if !m.Cells[y][x].Bottom {
+// 			dfs(y+1, x)
+// 		}
+// 		if x > 0 && !m.Cells[y][x-1].Right {
+// 			dfs(y, x-1)
+// 		}
+// 		if y > 0 && !m.Cells[y-1][x].Bottom {
+// 			dfs(y-1, x)
+// 		}
+// 	}
+
+// 	// Запускаем DFS из первой ячейки
+// 	dfs(0, 0)
+
+// 	// Проверяем, все ли ячейки посещены
+// 	for y := 0; y < m.Rows; y++ {
+// 		for x := 0; x < m.Cols; x++ {
+// 			if !visited[y][x] {
+// 				fmt.Printf("Ячейка не посещена: (%d, %d)\n", y, x)
+// 				return false
+// 			}
+// 		}
+// 	}
+// 	fmt.Println("Все ячейки посещены!")
+// 	return true
+// }
+
+// // func (m *Maze) GenerateEller() {
+// // 	for x := 0; x < m.Cols; x++ {
+// // 		m.Cells[0][x].Set = x + 1 // Каждая клетка начинает в своем множестве
+// // 	}
+// // 	debugPrintSets(m, 0)
+
+// // 	for y := 0; y < m.Rows-1; y++ {
+// // 		processRow(m, y)
+// // 		debugPrintSets(m, y+1)
+// // 	}
+
+// // 	processLastRow(m)
+// // }
+
+// // func processRow(m *Maze, y int) {
+// // 	// Инициализация множеств для следующей строки
+// // 	for x := 0; x < m.Cols; x++ {
+// // 		m.Cells[y+1][x].Set = 0 // Сбрасываем множества для следующей строки
+// // 	}
+
+// // 	// Шаг 1: Удаление случайных правых стен
+// // 	for x := 0; x < m.Cols-1; x++ {
+// // 		if m.Cells[y][x].Set != m.Cells[y][x+1].Set && rand.Float32() < 0.5 {
+// // 			m.Cells[y][x].Right = false
+// // 			mergeSets(m, y, x, x+1)
+// // 		}
+// // 	}
+
+// // 	// Шаг 2: Удаление случайных нижних стен
+// // 	for x := 0; x < m.Cols; x++ {
+// // 		if rand.Float32() < 0.5 || isOnlyInSet(m, y, x) {
+// // 			m.Cells[y][x].Bottom = false
+// // 		} else {
+// // 			// Если стена не удалена, клетка в следующей строке получает новый номер множества
+// // 			m.Cells[y+1][x].Set = m.Cells[y][x].Set
+// // 		}
+// // 	}
+// // }
+
+// // func processLastRow(m *Maze) {
+// // 	for x := 0; x < m.Cols-1; x++ {
+// // 		if m.Cells[m.Rows-1][x].Set != m.Cells[m.Rows-1][x+1].Set {
+// // 			m.Cells[m.Rows-1][x].Right = false
+// // 			mergeSets(m, m.Rows-1, x, x+1)
+// // 		}
+// // 	}
+// // }
+
+// // func mergeSets(m *Maze, y, x1, x2 int) {
+// // 	setToMerge := m.Cells[y][x2].Set
+// // 	targetSet := m.Cells[y][x1].Set
+
+// // 	for x := 0; x < m.Cols; x++ {
+// // 		if m.Cells[y][x].Set == setToMerge {
+// // 			m.Cells[y][x].Set = targetSet
+// // 		}
+// // 	}
+// // }
+
+// // func isOnlyInSet(m *Maze, y, x int) bool {
+// // 	set := m.Cells[y][x].Set
+// // 	count := 0
+
+// // 	for i := 0; i < m.Cols; i++ {
+// // 		if m.Cells[y][i].Set == set {
+// // 			count++
+// // 			if count > 1 {
+// // 				return false
+// // 			}
+// // 		}
+// // 	}
+
+// // 	return true
+// // }
+// // func isLastInSet(sets []int, x int) bool {
+// // 	setID := sets[x]
+// // 	for i := x + 1; i < len(sets); i++ {
+// // 		if sets[i] == setID {
+// // 			return false
+// // 		}
+// // 	}
+// // 	return true
+// // }
+
+// // func maxSetID(sets []int) int {
+// // 	maxID := sets[0]
+// // 	for _, id := range sets {
+// // 		if id > maxID {
+// // 			maxID = id
+// // 		}
+// // 	}
+// // 	return maxID
+// // }
+
+// // func isFullyConnected(m *Maze) bool {
+// // 	visited := make([][]bool, m.Rows)
+// // 	for i := range visited {
+// // 		visited[i] = make([]bool, m.Cols)
+// // 	}
+
+// // 	var dfs func(y, x int)
+// // 	dfs = func(y, x int) {
+// // 		if y < 0 || y >= m.Rows || x < 0 || x >= m.Cols || visited[y][x] {
+// // 			return
+// // 		}
+// // 		visited[y][x] = true
+// // 		if !m.Cells[y][x].Right {
+// // 			dfs(y, x+1)
+// // 		}
+// // 		if !m.Cells[y][x].Bottom {
+// // 			dfs(y+1, x)
+// // 		}
+// // 		if x > 0 && !m.Cells[y][x-1].Right {
+// // 			dfs(y, x-1)
+// // 		}
+// // 		if y > 0 && !m.Cells[y-1][x].Bottom {
+// // 			dfs(y-1, x)
+// // 		}
+// // 	}
+
+// // 	// Запускаем DFS из первой ячейки
+// // 	dfs(0, 0)
+
+// // 	// Проверяем, все ли ячейки посещены
+// // 	for y := 0; y < m.Rows; y++ {
+// // 		for x := 0; x < m.Cols; x++ {
+// // 			if !visited[y][x] {
+// // 				fmt.Printf("Ячейка не посещена: (%d, %d)\n", y, x)
+// // 				return false
+// // 			}
+// // 		}
+// // 	}
+// // 	fmt.Println("Все ячейки посещены!")
+// // 	return true
+// // }
+
+// // func createPassages(m *Maze) {
+// // 	visited := make([][]bool, m.Rows)
+// // 	for i := range visited {
+// // 		visited[i] = make([]bool, m.Cols)
+// // 	}
+
+// // 	var dfs func(y, x int)
+// // 	dfs = func(y, x int) {
+// // 		if y < 0 || y >= m.Rows || x < 0 || x >= m.Cols || visited[y][x] {
+// // 			return
+// // 		}
+// // 		visited[y][x] = true
+// // 		if !m.Cells[y][x].Right {
+// // 			dfs(y, x+1)
+// // 		}
+// // 		if !m.Cells[y][x].Bottom {
+// // 			dfs(y+1, x)
+// // 		}
+// // 		if x > 0 && !m.Cells[y][x-1].Right {
+// // 			dfs(y, x-1)
+// // 		}
+// // 		if y > 0 && !m.Cells[y-1][x].Bottom {
+// // 			dfs(y-1, x)
+// // 		}
+// // 	}
+
+// // 	// Запускаем DFS из первой ячейки
+// // 	dfs(0, 0)
+
+// // 	// Находим все изолированные ячейки и создаем проходы
+// // 	for y := 0; y < m.Rows; y++ {
+// // 		for x := 0; x < m.Cols; x++ {
+// // 			if !visited[y][x] {
+// // 				// Создаем проход вниз или вправо, но только один
+// // 				if y < m.Rows-1 {
+// // 					m.Cells[y][x].Bottom = false
+// // 					fmt.Printf("Создан проход вниз между (%d, %d) и (%d, %d)\n", y, x, y+1, x)
+// // 				} else if x < m.Cols-1 {
+// // 					m.Cells[y][x].Right = false
+// // 					fmt.Printf("Создан проход вправо между (%d, %d) и (%d, %d)\n", y, x, y, x+1)
+// // 				}
+// // 				// Помечаем ячейку как посещенную
+// // 				visited[y][x] = true
+// // 			}
+// // 		}
+// // 	}
+// // }
+
 // func NewGame(rows, cols int) *Game {
 // 	maze := NewMaze(rows, cols)
-// 	maze.Generate(rows, cols)
+// 	maze.Initialize(rows, cols)
+// 	maze.Generate(0, 0)
+// 	// maze.GenerateEller()
 // 	cellSize := float32(mazeWidth) / float32(cols)
 // 	return &Game{maze: maze, cellSize: cellSize}
 // }
