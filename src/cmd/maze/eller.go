@@ -54,9 +54,11 @@ func (m *Maze) Generate(randomNumbers []int) {
 
 	// Установка правых стенок
 	index := 0
-	for row := 0; row < m.Rows; row++ {
+	for row := 0; row < 1; row++ {
 		for col := 0; col < m.Cols; col++ {
 			if col < m.Cols-1 {
+				fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
+
 				if randomNumbers[index] == 1 {
 					m.Cells[row][col].RightWall = true
 				} else {
@@ -81,7 +83,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 	}
 
 	// Установка нижних стенок
-	for row := 0; row < m.Rows; row++ {
+	for row := 0; row < 1; row++ {
 		for col := 0; col < m.Cols; col++ {
 			if row < m.Rows-1 {
 				// Проверяем, нужно ли ставить нижнюю стенку
@@ -94,11 +96,23 @@ func (m *Maze) Generate(randomNumbers []int) {
 						count++
 					}
 				}
-
+				fmt.Printf("Множества --- %d ячйеки ---%d \n", set, count)
 				// Если множество содержит более одной ячейки без нижней границы и есть доступное число для установки стенки
-				if count > 1 && randomNumbers[index] == 1 {
-					m.Cells[row][col].BottomWall = true
+
+				// Если множество содержит более одной ячейки без нижней границы
+				if count > 1 {
+					// Устанавливаем нижнюю стенку, только если randomNumbers[index] == 1
+					fmt.Printf("randomNumbers[index] bottom = %d\n", randomNumbers[index])
+					if randomNumbers[index] == 1 {
+						m.Cells[row][col].BottomWall = true
+					}
+				} else {
+					// Если только одна ячейка в множестве, устанавливаем стенку, если randomNumbers[index] == 0
+					// if randomNumbers[index] == 0 {
+					// 	m.Cells[row][col].BottomWall = true
+					// }
 				}
+
 				index++ // Переход к следующему числу для нижних стенок
 			}
 		}
@@ -163,20 +177,20 @@ func main() {
 	randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
 
 	fmt.Println(randomNumbers)
-	maze := NewMaze(5, 5)
+	maze := NewMaze(4, 4)
 	// r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
-	// rows, cols := 5, 5
-	// numRandomNumbers := rows * cols
+	// rows, cols := 6, 6
+	// numRandomNumbers := rows * cols * 2
 	// randomNumbers := make([]int, numRandomNumbers)
 	// for i := range randomNumbers {
 	// 	randomNumbers[i] = r.Intn(2) // Генерация 0 или 1
 	// }
-	// // fmt.Println(randomNumbers)
+	// fmt.Println(randomNumbers)
 
 	// maze := NewMaze(rows, cols)
 	maze.Generate(randomNumbers)
 	// Печатаем множества ячеек
-	maze.PrintSets()
+	// maze.PrintSets()
 	game := &Game{maze: maze, cellSize: 50.0} // Изменено на 40.0
 	ebiten.SetWindowSize(400, 400)
 	ebiten.SetWindowTitle("Maze Generator")

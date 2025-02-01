@@ -763,3 +763,84 @@
 // 		fmt.Println()
 // 	}
 // }
+
+// func (m *Maze) Generate(randomNumbers []int) {
+// 	// Инициализация множеств для каждой ячейки
+// 	for row := 0; row < m.Rows; row++ {
+// 		for col := 0; col < m.Cols; col++ {
+// 			m.Cells[row][col].Set = row*m.Cols + col + 1 // Уникальные значения для каждой ячейки
+// 		}
+// 	}
+
+// 	// Генерация лабиринта
+// 	for row := 0; row < m.Rows; row++ {
+// 		if row > 0 {
+// 			// Копируем предыдущую строку
+// 			for col := 0; col < m.Cols; col++ {
+// 				m.Cells[row][col].RightWall = false // Убираем правые стенки
+// 				m.Cells[row][col].BottomWall = false // Убираем нижние стенки
+// 				m.Cells[row][col].Set = -1 // Сбрасываем множество
+// 			}
+// 		}
+
+// 		// Присваиваем новые множества
+// 		newSet := row*m.Cols + 1
+// 		for col := 0; col < m.Cols; col++ {
+// 			if m.Cells[row][col].Set == -1 {
+// 				m.Cells[row][col].Set = newSet
+// 			}
+// 		}
+
+// 		// Установка правых стенок
+// 		for col := 0; col < m.Cols; col++ {
+// 			if col < m.Cols-1 {
+// 				if randomNumbers[row*m.Cols+col] == 1 {
+// 					m.Cells[row][col].RightWall = true
+// 				} else {
+// 					// Объединяем множества
+// 					set1 := m.Cells[row][col].Set
+// 					set2 := m.Cells[row][col+1].Set
+
+// 					if set1 != set2 {
+// 						// Объединяем множества
+// 						for r := 0; r < m.Rows; r++ {
+// 							for c := 0; c < m.Cols; c++ {
+// 								if m.Cells[r][c].Set == set2 {
+// 									m.Cells[r][c].Set = set1 // Обновляем Set для всех ячеек, принадлежащих set2
+// 								}
+// 							}
+// 						}
+// 					}
+// 				}
+// 			}
+// 		}
+
+// 		// Установка нижних стенок
+// 		for col := 0; col < m.Cols; col++ {
+// 			if row < m.Rows-1 {
+// 				set := m.Cells[row][col].Set
+// 				count := 0
+
+// 				// Считаем количество ячеек в текущем множестве, которые не имеют нижней границы
+// 				for c := 0; c < m.Cols; c++ {
+// 					if m.Cells[row][c].Set == set && !m.Cells[row][c].BottomWall {
+// 						count++
+// 					}
+// 				}
+
+// 				// Если множество содержит более одной ячейки без нижней границы и есть доступное число для установки стенки
+// 				if count > 1 && randomNumbers[(row+1)*m.Cols+col] == 1 {
+// 					m.Cells[row][col].BottomWall = true
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	// Вывод состояния ячеек
+// 	for row := 0; row < m.Rows; row++ {
+// 		for col := 0; col < m.Cols; col++ {
+// 			fmt.Printf("Cell(%d, %d): RightWall=%v, BottomWall=%v, Set=%d\n",
+// 				row, col, m.Cells[row][col].RightWall, m.Cells[row][col].BottomWall, m.Cells[row][col].Set)
+// 		}
+// 	}
+// }

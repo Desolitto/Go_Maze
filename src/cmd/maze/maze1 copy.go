@@ -49,7 +49,7 @@
 // 	for i := range cells {
 // 		cells[i] = make([]Cell, cols)
 // 		for j := range cells[i] {
-// 			cells[i][j] = Cell{Visited: false, Right: true, Bottom: true}
+// 			cells[i][j] = Cell{Visited: false, Right: false, Bottom: false, Set: -1}
 // 		}
 // 	}
 // 	return &Maze{Rows: rows, Cols: cols, Cells: cells}
@@ -112,29 +112,98 @@
 // 	fmt.Println()
 // }
 
-// func (m *Maze) GenerateEller() {
-// 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-// 	// Инициализация множеств для первой строки
-// 	for x := 0; x < m.Cols; x++ {
-// 		m.Cells[0][x].Set = x + 1
+// func (m *Maze) GenerateEller(randomNumbers []int) {
+// 	// Инициализация множеств для каждой ячейки
+// 	for row := 0; row < m.Rows; row++ {
+// 		for col := 0; col < m.Cols; col++ {
+// 			m.Cells[row][col].Set = row*m.Cols + col + 1 // Уникальные значения для каждой ячейки
+// 		}
 // 	}
 
-// 	// Обработка всех строк, кроме последней
-// 	for y := 0; y < m.Rows-1; y++ {
-// 		processRow(m, y, r)
+// 	// Установка правых стенок
+// 	index := 0
+// 	for row := 0; row < m.Rows; row++ {
+// 		for col := 0; col < m.Cols; col++ {
+// 			if col < m.Cols-1 {
+// 				if randomNumbers[index] == 1 {
+// 					m.Cells[row][col].Right = true
+// 				} else {
+// 					// Объединяем множества
+// 					set1 := m.Cells[row][col].Set
+// 					set2 := m.Cells[row][col+1].Set
+
+// 					if set1 != set2 {
+// 						// Объединяем множества
+// 						for r := 0; r < m.Rows; r++ {
+// 							for c := 0; c < m.Cols; c++ {
+// 								if m.Cells[r][c].Set == set2 {
+// 									m.Cells[r][c].Set = set1 // Обновляем Set для всех ячеек, принадлежащих set2
+// 								}
+// 							}
+// 						}
+// 					}
+// 				}
+// 				index++ // Переход к следующему числу для правых стенок
+// 			}
+// 		}
 // 	}
 
-// 	// Обработка последней строки
-// 	processLastRow(m, r)
+// 	// Установка нижних стенок
+// 	for row := 0; row < m.Rows; row++ {
+// 		for col := 0; col < m.Cols; col++ {
+// 			if row < m.Rows-1 {
+// 				// Проверяем, нужно ли ставить нижнюю стенку
+// 				set := m.Cells[row][col].Set
+// 				count := 0
 
-// 	// Проверка связности лабиринта
-// 	if !isFullyConnected(m) {
-// 		fmt.Println("Лабиринт не является идеальным!")
-// 	} else {
-// 		fmt.Println("Лабиринт идеальный!")
+// 				// Считаем количество ячеек в текущем множестве, которые не имеют нижней границы
+// 				for c := 0; c < m.Cols; c++ {
+// 					if m.Cells[row][c].Set == set && !m.Cells[row][c].Bottom {
+// 						count++
+// 					}
+// 				}
+
+// 				// Если множество содержит более одной ячейки без нижней границы и есть доступное число для установки стенки
+// 				if count > 1 && randomNumbers[index] == 1 {
+// 					m.Cells[row][col].Bottom = true
+// 				}
+// 				index++ // Переход к следующему числу для нижних стенок
+// 			}
+// 		}
 // 	}
+
+// 	// Вывод состояния ячеек
+// 	// for row := 0; row < m.Rows; row++ {
+// 	// 	for col := 0; col < m.Cols; col++ {
+// 	// 		fmt.Printf("Cell(%d, %d): RightWall=%v, BottomWall=%v, Set=%d\n",
+// 	// 			row, col, m.Cells[row][col].RightWall, m.Cells[row][col].BottomWall, m.Cells[row][col].Set)
+// 	// 	}
+// 	// }
 // }
+
+// // func (m *Maze) GenerateEller() {
+// // 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+// // 	// Инициализация множеств для первой строки
+// // 	for x := 0; x < m.Cols; x++ {
+// // 		m.Cells[0][x].Set = x + 1
+// // 	}
+
+// // 	// Обработка всех строк, кроме последней
+// // 	for y := 0; y < m.Rows-1; y++ {
+// // 		processRow(m, y, r)
+// // 	}
+
+// // 	// Обработка последней строки
+// // 	processLastRow(m, r)
+
+// // 	// Проверка связности лабиринта
+// // 	if !isFullyConnected(m) {
+// // 		fmt.Println("Лабиринт не является идеальным!")
+// // 	} else {
+// // 		fmt.Println("Лабиринт идеальный!")
+// // 	}
+// // }
 
 // func processRow(m *Maze, y int, r *rand.Rand) {
 // 	// Шаг 1: Удаление случайных правых стен
@@ -436,9 +505,15 @@
 
 // func NewGame(rows, cols int) *Game {
 // 	maze := NewMaze(rows, cols)
-// 	maze.Initialize(rows, cols)
-// 	maze.Generate(0, 0)
-// 	// maze.GenerateEller()
+// 	// maze.Initialize(rows, cols)
+// 	// maze.Generate(0, 0)
+// 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+// 	numRandomNumbers := rows * cols * 2
+// 	randomNumbers := make([]int, numRandomNumbers)
+// 	for i := range randomNumbers {
+// 		randomNumbers[i] = r.Intn(2) // Генерация 0 или 1
+// 	}
+// 	maze.GenerateEller(randomNumbers)
 // 	cellSize := float32(mazeWidth) / float32(cols)
 // 	return &Game{maze: maze, cellSize: cellSize}
 // }
