@@ -163,7 +163,17 @@ func main() {
 	randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
 
 	fmt.Println(randomNumbers)
-	maze := NewMaze(4, 4)
+	maze := NewMaze(5, 5)
+	// r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
+	// rows, cols := 5, 5
+	// numRandomNumbers := rows * cols
+	// randomNumbers := make([]int, numRandomNumbers)
+	// for i := range randomNumbers {
+	// 	randomNumbers[i] = r.Intn(2) // Генерация 0 или 1
+	// }
+	// // fmt.Println(randomNumbers)
+
+	// maze := NewMaze(rows, cols)
 	maze.Generate(randomNumbers)
 	// Печатаем множества ячеек
 	maze.PrintSets()
