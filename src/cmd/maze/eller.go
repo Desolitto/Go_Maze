@@ -54,7 +54,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 
 	// Установка правых стенок
 	index := 0
-	for row := 0; row < 4; row++ {
+	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
 			if col < m.Cols-1 {
 				fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
@@ -67,6 +67,9 @@ func (m *Maze) Generate(randomNumbers []int) {
 					set2 := m.Cells[row][col+1].Set
 
 					if set1 != set2 {
+						// Убираем стенку между текущей ячейкой и ячейкой справа
+						m.Cells[row][col].RightWall = false
+
 						// Объединяем множества
 						for r := 0; r < m.Rows; r++ {
 							for c := 0; c < m.Cols; c++ {
@@ -80,10 +83,8 @@ func (m *Maze) Generate(randomNumbers []int) {
 				index++ // Переход к следующему числу для правых стенок
 			}
 		}
-		// }
 
-		// Установка нижних стенок
-		// for row := 0; row < 1; row++ {
+		// Установка нижних стенок и объединение множеств для последней строки
 		if row == m.Rows-1 { // Проверяем, является ли текущая строка последней
 			for col := 0; col < m.Cols; col++ {
 				m.Cells[row][col].BottomWall = true // Присваиваем нижнюю стенку всем ячейкам в последней строке
@@ -97,7 +98,6 @@ func (m *Maze) Generate(randomNumbers []int) {
 				if set1 != set2 {
 					// Убираем стенку между текущей ячейкой и ячейкой справа
 					m.Cells[row][col].RightWall = false
-					m.Cells[row][col+1].RightWall = false
 
 					// Объединяем множества
 					for r := 0; r < m.Rows; r++ {
@@ -122,8 +122,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 							count++
 						}
 					}
-					fmt.Printf("Множества --- %d ячйеки ---%d \n", set, count)
-					// Если множество содержит более одной ячейки без нижней границы и есть доступное число для установки стенки
+					fmt.Printf("Множества --- %d ячейки ---%d \n", set, count)
 
 					// Если множество содержит более одной ячейки без нижней границы
 					if count > 1 {
@@ -132,11 +131,6 @@ func (m *Maze) Generate(randomNumbers []int) {
 						if randomNumbers[index] == 1 {
 							m.Cells[row][col].BottomWall = true
 						}
-					} else {
-						// Если только одна ячейка в множестве, устанавливаем стенку, если randomNumbers[index] == 0
-						// if randomNumbers[index] == 0 {
-						// 	m.Cells[row][col].BottomWall = true
-						// }
 					}
 
 					index++ // Переход к следующему числу для нижних стенок
@@ -144,6 +138,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 			}
 		}
 	}
+
 	// Вывод состояния ячеек
 	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
@@ -205,7 +200,7 @@ func main() {
 	fmt.Println(randomNumbers)
 	maze := NewMaze(4, 4)
 	// r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
-	// rows, cols := 6, 6
+	// rows, cols := 5, 5
 	// numRandomNumbers := rows * cols * 2
 	// randomNumbers := make([]int, numRandomNumbers)
 	// for i := range randomNumbers {
