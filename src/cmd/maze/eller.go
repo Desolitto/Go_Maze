@@ -84,40 +84,66 @@ func (m *Maze) Generate(randomNumbers []int) {
 
 		// Установка нижних стенок
 		// for row := 0; row < 1; row++ {
-		for col := 0; col < m.Cols; col++ {
-			if row < m.Rows-1 {
-				// Проверяем, нужно ли ставить нижнюю стенку
-				set := m.Cells[row][col].Set
-				count := 0
+		if row == m.Rows-1 { // Проверяем, является ли текущая строка последней
+			for col := 0; col < m.Cols; col++ {
+				m.Cells[row][col].BottomWall = true // Присваиваем нижнюю стенку всем ячейкам в последней строке
+			}
 
-				// Считаем количество ячеек в текущем множестве, которые не имеют нижней границы
-				for c := 0; c < m.Cols; c++ {
-					if m.Cells[row][c].Set == set && !m.Cells[row][c].BottomWall {
-						count++
+			// Убираем стенки между ячейками и объединяем множества
+			for col := 0; col < m.Cols-1; col++ {
+				set1 := m.Cells[row][col].Set
+				set2 := m.Cells[row][col+1].Set
+
+				if set1 != set2 {
+					// Убираем стенку между текущей ячейкой и ячейкой справа
+					m.Cells[row][col].RightWall = false
+					m.Cells[row][col+1].RightWall = false
+
+					// Объединяем множества
+					for r := 0; r < m.Rows; r++ {
+						for c := 0; c < m.Cols; c++ {
+							if m.Cells[r][c].Set == set2 {
+								m.Cells[r][c].Set = set1 // Обновляем Set для всех ячеек, принадлежащих set2
+							}
+						}
 					}
 				}
-				fmt.Printf("Множества --- %d ячйеки ---%d \n", set, count)
-				// Если множество содержит более одной ячейки без нижней границы и есть доступное число для установки стенки
+			}
+		} else {
+			for col := 0; col < m.Cols; col++ {
+				if row < m.Rows-1 {
+					// Проверяем, нужно ли ставить нижнюю стенку
+					set := m.Cells[row][col].Set
+					count := 0
 
-				// Если множество содержит более одной ячейки без нижней границы
-				if count > 1 {
-					// Устанавливаем нижнюю стенку, только если randomNumbers[index] == 1
-					fmt.Printf("randomNumbers[index] bottom = %d\n", randomNumbers[index])
-					if randomNumbers[index] == 1 {
-						m.Cells[row][col].BottomWall = true
+					// Считаем количество ячеек в текущем множестве, которые не имеют нижней границы
+					for c := 0; c < m.Cols; c++ {
+						if m.Cells[row][c].Set == set && !m.Cells[row][c].BottomWall {
+							count++
+						}
 					}
-				} else {
-					// Если только одна ячейка в множестве, устанавливаем стенку, если randomNumbers[index] == 0
-					// if randomNumbers[index] == 0 {
-					// 	m.Cells[row][col].BottomWall = true
-					// }
-				}
+					fmt.Printf("Множества --- %d ячйеки ---%d \n", set, count)
+					// Если множество содержит более одной ячейки без нижней границы и есть доступное число для установки стенки
 
-				index++ // Переход к следующему числу для нижних стенок
+					// Если множество содержит более одной ячейки без нижней границы
+					if count > 1 {
+						// Устанавливаем нижнюю стенку, только если randomNumbers[index] == 1
+						fmt.Printf("randomNumbers[index] bottom = %d\n", randomNumbers[index])
+						if randomNumbers[index] == 1 {
+							m.Cells[row][col].BottomWall = true
+						}
+					} else {
+						// Если только одна ячейка в множестве, устанавливаем стенку, если randomNumbers[index] == 0
+						// if randomNumbers[index] == 0 {
+						// 	m.Cells[row][col].BottomWall = true
+						// }
+					}
+
+					index++ // Переход к следующему числу для нижних стенок
+				}
 			}
 		}
 	}
-
 	// Вывод состояния ячеек
 	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
