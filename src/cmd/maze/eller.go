@@ -45,101 +45,102 @@ func NewMaze(rows, cols int) *Maze {
 }
 
 func (m *Maze) Generate(randomNumbers []int) {
-	// Инициализация множеств для каждой ячейки
+	// Инициализация ячеек
 	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
-			m.Cells[row][col].Set = row*m.Cols + col + 1 // Уникальные значения для каждой ячейки
+			m.Cells[row][col].Set = row*m.Cols + col + 1
 		}
 	}
 
-	// Установка правых стенок
 	index := 0
 	for row := 0; row < m.Rows; row++ {
+		// Создаем пустую строку
+		newRow := make([]Cell, m.Cols)
 		for col := 0; col < m.Cols; col++ {
-			if col < m.Cols-1 {
-				fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
-
-				if randomNumbers[index] == 1 {
-					m.Cells[row][col].RightWall = true
-				} else {
-					// Объединяем множества
-					set1 := m.Cells[row][col].Set
-					set2 := m.Cells[row][col+1].Set
-
-					if set1 != set2 {
-						// Убираем стенку между текущей ячейкой и ячейкой справа
-						m.Cells[row][col].RightWall = false
-
-						// Объединяем множества
-						for r := 0; r < m.Rows; r++ {
-							for c := 0; c < m.Cols; c++ {
-								if m.Cells[r][c].Set == set2 {
-									m.Cells[r][c].Set = set1 // Обновляем Set для всех ячеек, принадлежащих set2
-								}
-							}
-						}
-					}
-				}
-				index++ // Переход к следующему числу для правых стенок
-			}
+			newRow[col].Set = row*m.Cols + col + 1 // Инициализируем множество для новой строки
 		}
 
-		// Установка нижних стенок и объединение множеств для последней строки
-		if row == m.Rows-1 { // Проверяем, является ли текущая строка последней
-			for col := 0; col < m.Cols; col++ {
-				m.Cells[row][col].BottomWall = true // Присваиваем нижнюю стенку всем ячейкам в последней строке
-			}
-
-			// Убираем стенки между ячейками и объединяем множества
-			for col := 0; col < m.Cols-1; col++ {
+		// Обработка правых стенок
+		for col := 0; col < m.Cols-1; col++ {
+			fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
+			if randomNumbers[index] == 1 {
+				// Ставим стенку
+				m.Cells[row][col].RightWall = true
+			} else {
+				// Не ставим стенку
 				set1 := m.Cells[row][col].Set
 				set2 := m.Cells[row][col+1].Set
 
 				if set1 != set2 {
-					// Убираем стенку между текущей ячейкой и ячейкой справа
-					m.Cells[row][col].RightWall = false
-
 					// Объединяем множества
 					for r := 0; r < m.Rows; r++ {
 						for c := 0; c < m.Cols; c++ {
 							if m.Cells[r][c].Set == set2 {
-								m.Cells[r][c].Set = set1 // Обновляем Set для всех ячеек, принадлежащих set2
+								m.Cells[r][c].Set = set1
 							}
 						}
 					}
+				} else {
+					// Ставим стенку, если множества совпадают
+					m.Cells[row][col].RightWall = true
 				}
+			}
+			index++
+		}
+
+		// Обработка нижних стенок
+		for col := 0; col < m.Cols; col++ {
+			set := m.Cells[row][col].Set
+			count := 0
+
+			// Подсчет ячеек без нижней границы
+			for c := 0; c < m.Cols; c++ {
+				if m.Cells[row][c].Set == set && !m.Cells[row][c].BottomWall {
+					count++
+				}
+			}
+
+			if count > 1 {
+				fmt.Printf("randomNumbers[index] bottom = %d\n", randomNumbers[index])
+				if randomNumbers[index] == 1 {
+					m.Cells[row][col].BottomWall = true
+				}
+			}
+			index++
+		}
+
+		// Если это последняя строка, добавляем нижние стенки
+		if row == m.Rows-1 {
+			for col := 0; col < m.Cols; col++ {
+				m.Cells[row][col].BottomWall = true
 			}
 		} else {
+			// Копируем текущую строку для следующей итерации
 			for col := 0; col < m.Cols; col++ {
-				if row < m.Rows-1 {
-					// Проверяем, нужно ли ставить нижнюю стенку
-					set := m.Cells[row][col].Set
-					count := 0
+				newRow[col] = m.Cells[row][col]
+				newRow[col].RightWall = false // Удаляем правые стенки
 
-					// Считаем количество ячеек в текущем множестве, которые не имеют нижней границы
-					for c := 0; c < m.Cols; c++ {
-						if m.Cells[row][c].Set == set && !m.Cells[row][c].BottomWall {
-							count++
-						}
-					}
-					fmt.Printf("Множества --- %d ячейки ---%d \n", set, count)
-
-					// Если множество содержит более одной ячейки без нижней границы
-					if count > 1 {
-						// Устанавливаем нижнюю стенку, только если randomNumbers[index] == 1
-						fmt.Printf("randomNumbers[index] bottom = %d\n", randomNumbers[index])
-						if randomNumbers[index] == 1 {
-							m.Cells[row][col].BottomWall = true
-						}
-					}
-
-					index++ // Переход к следующему числу для нижних стенок
+				if m.Cells[row][col].BottomWall {
+					newRow[col].Set = 0            // Присваиваем пустое множество
+					newRow[col].BottomWall = false // Удаляем нижнюю стенку
 				}
 			}
+
+			// Присваиваем новые множества
+			for col := 0; col < m.Cols; col++ {
+				if newRow[col].Set == 0 {
+					newRow[col].Set = m.Rows*m.Cols + len(m.Cells) + col + 1 // Генерируем уникальное множество
+					fmt.Printf("Assigned new Set to Cell(%d, %d): Set=%d\n", row, col, newRow[col].Set)
+				}
+			}
+
+			// Добавляем новую строку в лабиринт
+			m.Cells = append(m.Cells, newRow)
+			fmt.Printf("New Row Added: %v\n", newRow)
 		}
 	}
 
-	// Вывод состояния ячеек
+	// Вывод состояния всех ячеек
 	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
 			fmt.Printf("Cell(%d, %d): RightWall=%v, BottomWall=%v, Set=%d\n",
