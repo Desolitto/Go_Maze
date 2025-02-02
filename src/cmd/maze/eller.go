@@ -54,7 +54,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 
 	// Установка правых стенок
 	index := 0
-	for row := 0; row < 1; row++ {
+	for row := 0; row < 4; row++ {
 		for col := 0; col < m.Cols; col++ {
 			if col < m.Cols-1 {
 				fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
@@ -80,10 +80,10 @@ func (m *Maze) Generate(randomNumbers []int) {
 				index++ // Переход к следующему числу для правых стенок
 			}
 		}
-	}
+		// }
 
-	// Установка нижних стенок
-	for row := 0; row < 1; row++ {
+		// Установка нижних стенок
+		// for row := 0; row < 1; row++ {
 		for col := 0; col < m.Cols; col++ {
 			if row < m.Rows-1 {
 				// Проверяем, нужно ли ставить нижнюю стенку
