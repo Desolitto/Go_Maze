@@ -64,9 +64,11 @@ func (m *Maze) Generate(randomNumbers []int) {
 	for row := 0; row < m.Rows; row++ {
 		fmt.Printf("некст новая строка: %v\n", newRow)
 		// Обработка правых стенок
-
+		if row > 0 {
+			m.Cells = append(m.Cells, newRow)
+		}
 		for col := 0; col < m.Cols-1; col++ {
-			fmt.Printf("Перед установкой стенки: Cell(%d, %d) Set=%d\n\nFullSet=%v\n\n", row, col, m.Cells[row][col].Set, m.Cells)
+			fmt.Printf("Перед установкой стенки: Cell(%d, %d) Set=%d\n\n", row, col, m.Cells[row][col].Set)
 			fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
 			if randomNumbers[index] == 1 {
 				// Ставим стенку
@@ -163,7 +165,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 			fmt.Println("]")
 			// Добавляем новую строку в лабиринт
 			m.Cells = append(m.Cells, newRow)
-			fmt.Printf("Добавлена новая строка: %v\n", newRow)
+			fmt.Printf("Добавлена новая строка: %v\n\n %v\n", newRow, m.Cells)
 		}
 	}
 
