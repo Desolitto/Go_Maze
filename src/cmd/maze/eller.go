@@ -48,26 +48,32 @@ func (m *Maze) Generate(randomNumbers []int) {
 	// Инициализация ячеек
 	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
-			m.Cells[row][col].Set = row*m.Cols + col + 1
+			m.Cells[row][col].Set = row*m.Cols + col + 1 // Множества начинаются с 1
 		}
 	}
 
 	index := 0
+	currentSetCount := 1 // Начинаем с 1, чтобы множества начинались с 1
+	for col := 0; col < m.Cols; col++ {
+		m.Cells[0][col].Set = col + 1 // Присваиваем множества начиная с 1
+		currentSetCount++
+		fmt.Printf(" set %d curr - %d\n", m.Cells[0][col].Set, currentSetCount)
+	}
+	// Создаем новую строку вне цикла
+	newRow := make([]Cell, m.Cols)
 	for row := 0; row < m.Rows; row++ {
-		// Создаем пустую строку
-		newRow := make([]Cell, m.Cols)
-		for col := 0; col < m.Cols; col++ {
-			newRow[col].Set = row*m.Cols + col + 1 // Инициализируем множество для новой строки
-		}
-
+		fmt.Printf("некст новая строка: %v\n", newRow)
 		// Обработка правых стенок
+
 		for col := 0; col < m.Cols-1; col++ {
+			fmt.Printf("Перед установкой стенки: Cell(%d, %d) Set=%d\n\nFullSet=%v\n\n", row, col, m.Cells[row][col].Set, m.Cells)
 			fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
 			if randomNumbers[index] == 1 {
 				// Ставим стенку
 				m.Cells[row][col].RightWall = true
+				fmt.Printf("Псоле установкой стенки: Cell(%d, %d) Set=%d\n", row, col, m.Cells[row][col].Set)
 			} else {
-				// Не ставим стенку
+				// Не ставим стенку, объединяем множества
 				set1 := m.Cells[row][col].Set
 				set2 := m.Cells[row][col+1].Set
 
@@ -83,6 +89,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 				} else {
 					// Ставим стенку, если множества совпадают
 					m.Cells[row][col].RightWall = true
+
 				}
 			}
 			index++
@@ -108,7 +115,7 @@ func (m *Maze) Generate(randomNumbers []int) {
 			}
 			index++
 		}
-
+		fmt.Printf("Измененая строка: %v\n", newRow)
 		// Если это последняя строка, добавляем нижние стенки
 		if row == m.Rows-1 {
 			for col := 0; col < m.Cols; col++ {
@@ -117,9 +124,13 @@ func (m *Maze) Generate(randomNumbers []int) {
 		} else {
 			// Копируем текущую строку для следующей итерации
 			for col := 0; col < m.Cols; col++ {
-				newRow[col] = m.Cells[row][col]
-				newRow[col].RightWall = false // Удаляем правые стенки
-
+				newRow[col] = Cell{
+					RightWall:  m.Cells[row][col].RightWall,
+					BottomWall: m.Cells[row][col].BottomWall,
+					Set:        m.Cells[row][col].Set,
+				}
+				// Удаляем правые стенки и нижние границы
+				newRow[col].RightWall = false
 				if m.Cells[row][col].BottomWall {
 					newRow[col].Set = 0            // Присваиваем пустое множество
 					newRow[col].BottomWall = false // Удаляем нижнюю стенку
@@ -129,14 +140,30 @@ func (m *Maze) Generate(randomNumbers []int) {
 			// Присваиваем новые множества
 			for col := 0; col < m.Cols; col++ {
 				if newRow[col].Set == 0 {
-					newRow[col].Set = m.Rows*m.Cols + len(m.Cells) + col + 1 // Генерируем уникальное множество
-					fmt.Printf("Assigned new Set to Cell(%d, %d): Set=%d\n", row, col, newRow[col].Set)
+					// Присваиваем новое множество
+					newRow[col].Set = currentSetCount
+					currentSetCount++
+					fmt.Printf("Присвоено новое множество ячейке (%d, %d): Set=%d\n", row+1, col, newRow[col].Set)
 				}
 			}
 
+			// Устанавливаем нижние стенки для новой строки
+			for col := 0; col < m.Cols; col++ {
+				if newRow[col].Set != 0 && m.Cells[row][col].BottomWall {
+					newRow[col].BottomWall = true // Устанавливаем нижнюю стенку, если это необходимо
+				}
+			}
+			fmt.Print("Измененая строка: [")
+			for col := 0; col < m.Cols; col++ {
+				fmt.Printf("{%v %v %d}", m.Cells[row][col].RightWall, m.Cells[row][col].BottomWall, m.Cells[row][col].Set)
+				if col < m.Cols-1 {
+					fmt.Print(" ")
+				}
+			}
+			fmt.Println("]")
 			// Добавляем новую строку в лабиринт
 			m.Cells = append(m.Cells, newRow)
-			fmt.Printf("New Row Added: %v\n", newRow)
+			fmt.Printf("Добавлена новая строка: %v\n", newRow)
 		}
 	}
 
