@@ -8,6 +8,7 @@
 // 	"log"
 // 	"math/rand"
 // 	"os"
+// 	"time"
 
 // 	"github.com/hajimehoshi/ebiten/v2"
 // 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -132,6 +133,143 @@
 // 	fmt.Println()
 // }
 
+// func (m *Maze) GenerateEller(randomNumbers []int) {
+// 	// Инициализация ячеек
+// 	for row := 0; row < m.Rows; row++ {
+// 		for col := 0; col < m.Cols; col++ {
+// 			m.Cells[row][col].Set = row*m.Cols + col + 1 // Множества начинаются с 1
+// 		}
+// 	}
+
+// 	index := 0
+// 	currentSetCount := 1 // Начинаем с 1, чтобы множества начинались с 1
+// 	for col := 0; col < m.Cols; col++ {
+// 		m.Cells[0][col].Set = col + 1 // Присваиваем множества начиная с 1
+// 		currentSetCount++
+// 		fmt.Printf(" set %d curr - %d\n", m.Cells[0][col].Set, currentSetCount)
+// 	}
+
+// 	for row := 0; row < m.Rows; row++ {
+// 		fmt.Println(row)
+// 		if row > 0 {
+// 			for col := 0; col < m.Cols; col++ {
+// 				m.Cells[row][col].Right = m.Cells[row-1][col].Right
+// 				m.Cells[row][col].Bottom = m.Cells[row-1][col].Bottom
+// 				m.Cells[row][col].Set = m.Cells[row-1][col].Set
+// 			}
+// 			// Удаляем правые стенки и нижние границы
+// 			for col := 0; col < m.Cols; col++ {
+// 				m.Cells[row][col].Right = false
+// 				if m.Cells[row-1][col].Bottom {
+// 					m.Cells[row][col].Set = 0        // Присваиваем пустое множество
+// 					m.Cells[row][col].Bottom = false // Удаляем нижнюю стенку
+// 				}
+// 			}
+// 			// Присваиваем новые множества для следующей строки
+// 			for col := 0; col < m.Cols; col++ {
+// 				if m.Cells[row][col].Set == 0 {
+// 					m.Cells[row][col].Set = currentSetCount
+// 					currentSetCount++
+// 					fmt.Printf("1Присвоено новое множество ячейке (%d, %d): Set=%d\n", row, col, m.Cells[row][col].Set)
+// 				}
+// 			}
+// 		}
+
+// 		fmt.Printf("ПЕРЕД УСТАНОВКОЙ СТЕНКИ:\nСтрока %d", row)
+// 		for col := 0; col < m.Cols; col++ {
+// 			fmt.Printf("{R: %v, B: %v, Set: %d} ", m.Cells[row][col].Right, m.Cells[row][col].Bottom, m.Cells[row][col].Set)
+// 		}
+// 		fmt.Println()
+
+// 		// Обработка правых стенок
+// 		for col := 0; col < m.Cols-1; col++ {
+// 			fmt.Printf("Перед установкой стенки: Cell(%d, %d) Set=%d\n\n", row, col, m.Cells[row][col].Set)
+// 			fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
+// 			if randomNumbers[index] == 1 {
+// 				// Ставим стенку
+// 				m.Cells[row][col].Right = true
+// 				fmt.Printf("После установкой стенки: Cell(%d, %d) Set=%d\n", row, col, m.Cells[row][col].Set)
+// 			} else {
+// 				// Не ставим стенку, объединяем множества
+// 				set1 := m.Cells[row][col].Set
+// 				set2 := m.Cells[row][col+1].Set
+
+// 				if set1 != set2 {
+// 					// Объединяем множества
+// 					for r := 0; r < m.Rows; r++ {
+// 						for c := 0; c < m.Cols; c++ {
+// 							if m.Cells[r][c].Set == set2 {
+// 								m.Cells[r][c].Set = set1
+// 							}
+// 						}
+// 					}
+// 				} else {
+// 					// Ставим стенку, если множества совпадают
+// 					m.Cells[row][col].Right = true
+// 				}
+// 			}
+// 			index++
+// 		}
+
+// 		// Обработка нижних стенок
+// 		for col := 0; col < m.Cols; col++ {
+// 			set := m.Cells[row][col].Set
+// 			count := 0
+
+// 			// Подсчет ячеек без нижней границы
+// 			for c := 0; c < m.Cols; c++ {
+// 				if m.Cells[row][c].Set == set && !m.Cells[row][c].Bottom {
+// 					count++
+// 				}
+// 			}
+
+// 			if count > 1 {
+// 				fmt.Printf("randomNumbers[index] bottom = %d\n", randomNumbers[index])
+// 				if randomNumbers[index] == 1 {
+// 					m.Cells[row][col].Bottom = true
+// 				}
+// 			}
+// 			index++
+// 		}
+
+// 		// Если это последняя строка, добавляем нижние стенки
+// 		if row == m.Rows-1 {
+// 			for col := 0; col < m.Cols; col++ {
+// 				m.Cells[row][col].Bottom = true
+// 			}
+// 			// Двигаясь слева направо, убираем стенки между ячейками, если множества не совпадают
+// 			for col := 0; col < m.Cols-1; col++ {
+// 				set1 := m.Cells[row][col].Set
+// 				set2 := m.Cells[row][col+1].Set
+
+// 				if set1 != set2 {
+// 					// Убираем стенку между ячейками
+// 					m.Cells[row][col].Right = false
+// 					// Объединяем множества
+// 					for r := 0; r < m.Rows; r++ {
+// 						for c := 0; c < m.Cols; c++ {
+// 							if m.Cells[r][c].Set == set2 {
+// 								m.Cells[r][c].Set = set1
+// 							}
+// 						}
+// 					}
+// 				}
+// 			}
+// 		}
+
+// 		// Печатаем измененную строку
+// 		fmt.Print("Измененая строка: [")
+// 		for col := 0; col < m.Cols; col++ {
+// 			fmt.Printf("{RightWall: %v, Bottom: %v, Set: %d}", m.Cells[row][col].Right, m.Cells[row][col].Bottom, m.Cells[row][col].Set)
+// 			if col < m.Cols-1 {
+// 				fmt.Print(" ")
+// 			}
+// 		}
+// 		fmt.Println("]")
+// 	}
+
+// }
+
 // // func (m *Maze) GenerateEller() {
 // // 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 // // 	for row := 0; row < m.Rows; row++ {
@@ -228,8 +366,15 @@
 // }
 
 // func NewGame(rows, cols int) *Game {
+// 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+// 	numRandomNumbers := rows * cols * 2
+// 	randomNumbers := make([]int, numRandomNumbers)
+// 	for i := range randomNumbers {
+// 		randomNumbers[i] = r.Intn(2) // Генерация 0 или 1
+// 	}
 // 	maze := NewMaze(rows, cols)
-// 	maze.Generate(rows, cols)
+// 	// maze.Generate(rows, cols)
+// 	maze.GenerateEller(randomNumbers)
 // 	cellSize := float32(mazeWidth) / float32(cols)
 // 	return &Game{maze: maze, cellSize: cellSize}
 // }
