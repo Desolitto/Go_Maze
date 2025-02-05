@@ -148,6 +148,24 @@ func (m *Maze) Generate(randomNumbers []int) {
 			for col := 0; col < m.Cols; col++ {
 				m.Cells[row][col].BottomWall = true
 			}
+			// Двигаясь слева направо, убираем стенки между ячейками, если множества не совпадают
+			for col := 0; col < m.Cols-1; col++ {
+				set1 := m.Cells[row][col].Set
+				set2 := m.Cells[row][col+1].Set
+
+				if set1 != set2 {
+					// Убираем стенку между ячейками
+					m.Cells[row][col].RightWall = false
+					// Объединяем множества
+					for r := 0; r < m.Rows; r++ {
+						for c := 0; c < m.Cols; c++ {
+							if m.Cells[r][c].Set == set2 {
+								m.Cells[r][c].Set = set1
+							}
+						}
+					}
+				}
+			}
 		}
 
 		// Печатаем измененную строку
@@ -162,12 +180,12 @@ func (m *Maze) Generate(randomNumbers []int) {
 	}
 
 	// Вывод состояния всех ячеек
-	for row := 0; row < m.Rows; row++ {
-		for col := 0; col < m.Cols; col++ {
-			fmt.Printf("Cell(%d, %d): RightWall=%v, BottomWall=%v, Set=%d\n",
-				row, col, m.Cells[row][col].RightWall, m.Cells[row][col].BottomWall, m.Cells[row][col].Set)
-		}
-	}
+	// for row := 0; row < m.Rows; row++ {
+	// 	for col := 0; col < m.Cols; col++ {
+	// 		fmt.Printf("Cell(%d, %d): RightWall=%v, BottomWall=%v, Set=%d\n",
+	// 			row, col, m.Cells[row][col].RightWall, m.Cells[row][col].BottomWall, m.Cells[row][col].Set)
+	// 	}
+	// }
 }
 
 func (m *Maze) PrintSets() {
