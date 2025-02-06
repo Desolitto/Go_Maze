@@ -114,7 +114,27 @@ func (m *Maze) Generate(x, y int) {
 		}
 	}
 }
-
+func (m *Maze) copyPreviousRow(row, currentSetCount int) {
+	for col := 0; col < m.Cols; col++ {
+		m.Cells[row][col].Right = m.Cells[row-1][col].Right
+		m.Cells[row][col].Bottom = m.Cells[row-1][col].Bottom
+		m.Cells[row][col].Set = m.Cells[row-1][col].Set
+	}
+	for col := 0; col < m.Cols; col++ {
+		m.Cells[row][col].Right = false
+		if m.Cells[row-1][col].Bottom {
+			m.Cells[row][col].Set = 0        // Присваиваем пустое множество
+			m.Cells[row][col].Bottom = false // Удаляем нижнюю стенку
+		}
+	}
+	// Присваиваем новые множества для следующей строки
+	for col := 0; col < m.Cols; col++ {
+		if m.Cells[row][col].Set == 0 {
+			m.Cells[row][col].Set = currentSetCount
+			currentSetCount++
+		}
+	}
+}
 func (m *Maze) GenerateEller(randomNumbers []int) {
 	// Инициализация ячеек
 	for row := 0; row < m.Rows; row++ {
@@ -134,35 +154,8 @@ func (m *Maze) GenerateEller(randomNumbers []int) {
 	for row := 0; row < m.Rows; row++ {
 		fmt.Println(row)
 		if row > 0 {
-			for col := 0; col < m.Cols; col++ {
-				m.Cells[row][col].Right = m.Cells[row-1][col].Right
-				m.Cells[row][col].Bottom = m.Cells[row-1][col].Bottom
-				m.Cells[row][col].Set = m.Cells[row-1][col].Set
-			}
-			// Удаляем правые стенки и нижние границы
-			for col := 0; col < m.Cols; col++ {
-				m.Cells[row][col].Right = false
-				if m.Cells[row-1][col].Bottom {
-					m.Cells[row][col].Set = 0        // Присваиваем пустое множество
-					m.Cells[row][col].Bottom = false // Удаляем нижнюю стенку
-				}
-			}
-			// Присваиваем новые множества для следующей строки
-			for col := 0; col < m.Cols; col++ {
-				if m.Cells[row][col].Set == 0 {
-					m.Cells[row][col].Set = currentSetCount
-					currentSetCount++
-					fmt.Printf("1Присвоено новое множество ячейке (%d, %d): Set=%d\n", row, col, m.Cells[row][col].Set)
-				}
-			}
+			m.copyPreviousRow(row, currentSetCount)
 		}
-
-		fmt.Printf("ПЕРЕД УСТАНОВКОЙ СТЕНКИ:\nСтрока %d", row)
-		for col := 0; col < m.Cols; col++ {
-			fmt.Printf("{R: %v, B: %v, Set: %d} ", m.Cells[row][col].Right, m.Cells[row][col].Bottom, m.Cells[row][col].Set)
-		}
-		fmt.Println()
-
 		// Обработка правых стенок
 		for col := 0; col < m.Cols-1; col++ {
 			fmt.Printf("Перед установкой стенки: Cell(%d, %d) Set=%d\n\n", row, col, m.Cells[row][col].Set)
@@ -431,55 +424,46 @@ func (m *Maze) SaveMaze(filename string) error {
 	}
 	defer file.Close()
 
-	// Записываем размеры лабиринта
-	_, err = fmt.Fprintf(file, "%d %d\n", m.Rows, m.Cols)
-	if err != nil {
+	if _, err = fmt.Fprintf(file, "%d %d\n", m.Rows, m.Cols); err != nil {
 		return err
 	}
 
-	// Записываем стенки справа
-	for y := 0; y < m.Rows; y++ {
-		for x := 0; x < m.Cols; x++ {
-			if m.Cells[y][x].Right {
-				if _, err = fmt.Fprintf(file, "1 "); err != nil {
-					return err
-				}
-			} else {
-				if _, err = fmt.Fprintf(file, "0 "); err != nil {
-					return err
-				}
-			}
-		}
-		if _, err = fmt.Fprintln(file); err != nil { // Переход на новую строку
-			return err
-		}
-	}
-
-	// Добавляем пробел между матрицами
-	_, err = fmt.Fprintln(file)
-	if err != nil {
+	if err := m.writeWalls(file, true); err != nil {
 		return err
 	}
 
-	// Записываем стенки снизу
+	if _, err = fmt.Fprintln(file); err != nil {
+		return err
+	}
+
+	return m.writeWalls(file, false)
+}
+
+func (m *Maze) writeWalls(file *os.File, isRight bool) error {
 	for y := 0; y < m.Rows; y++ {
 		for x := 0; x < m.Cols; x++ {
-			if m.Cells[y][x].Bottom {
-				if _, err = fmt.Fprintf(file, "1 "); err != nil {
-					return err
-				}
+			var wall bool
+			if isRight {
+				wall = m.Cells[y][x].Right
 			} else {
-				if _, err = fmt.Fprintf(file, "0 "); err != nil {
-					return err
-				}
+				wall = m.Cells[y][x].Bottom
+			}
+			if _, err := fmt.Fprintf(file, "%d ", boolToInt(wall)); err != nil {
+				return err
 			}
 		}
-		if _, err = fmt.Fprintln(file); err != nil { // Переход на новую строку
+		if _, err := fmt.Fprintln(file); err != nil {
 			return err
 		}
 	}
-
 	return nil
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 func main() {
