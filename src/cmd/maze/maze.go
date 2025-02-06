@@ -7,12 +7,14 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/sqweek/dialog"
+	"golang.org/x/exp/rand"
 )
 
 const (
@@ -61,8 +63,8 @@ func (m *Maze) copyPreviousRow(row int, currentSetCount *int) {
 	for col := 0; col < m.Cols; col++ {
 		m.Cells[row][col].Right = false
 		if m.Cells[row-1][col].Bottom {
-			m.Cells[row][col].Set = 0        // Присваиваем пустое множество
-			m.Cells[row][col].Bottom = false // Удаляем нижнюю стенку
+			m.Cells[row][col].Set = 0
+			m.Cells[row][col].Bottom = false
 		}
 	}
 	for col := 0; col < m.Cols; col++ {
@@ -109,25 +111,21 @@ func (m *Maze) processRightWalls(row int, randomNumbers []int, index *int) {
 func (m *Maze) processBottomWalls(row int, randomNumbers []int, index *int) {
 	for col := 0; col < m.Cols; col++ {
 		set := m.Cells[row][col].Set
-		count := m.countCellsWithoutBottom(set)
-
-		if count > 1 && randomNumbers[*index] == 1 {
-			m.Cells[row][col].Bottom = true
+		count := 0
+		for c := 0; c < m.Cols; c++ {
+			if m.Cells[row][c].Set == set && !m.Cells[row][c].Bottom {
+				count++
+			}
 		}
-		(*index)++
+
+		if count > 1 {
+			if randomNumbers[*index] == 1 {
+				m.Cells[row][col].Bottom = true
+			}
+		}
+		*index++
 	}
 }
-
-func (m *Maze) countCellsWithoutBottom(set int) int {
-	count := 0
-	for c := 0; c < m.Cols; c++ {
-		if m.Cells[m.Rows-1][c].Set == set && !m.Cells[m.Rows-1][c].Bottom {
-			count++
-		}
-	}
-	return count
-}
-
 func (m *Maze) addBottomWalls(row int) {
 	for col := 0; col < m.Cols; col++ {
 		m.Cells[row][col].Bottom = true
@@ -141,56 +139,14 @@ func (m *Maze) GenerateEller(randomNumbers []int) {
 	m.setFirstRowSets(&currentSetCount)
 	index := 0
 	for row := 0; row < m.Rows; row++ {
+
 		if row > 0 {
 			m.copyPreviousRow(row, &currentSetCount)
 		}
+
 		m.processRightWalls(row, randomNumbers, &index)
-		// // Обработка правых стенок
-		// for col := 0; col < m.Cols-1; col++ {
-		// 	if randomNumbers[index] == 1 {
-		// 		// Ставим стенку
-		// 		m.Cells[row][col].Right = true
-		// 	} else {
-		// 		set1 := m.Cells[row][col].Set
-		// 		set2 := m.Cells[row][col+1].Set
+		m.processBottomWalls(row, randomNumbers, &index)
 
-		// 		if set1 != set2 {
-		// 			for r := 0; r < m.Rows; r++ {
-		// 				for c := 0; c < m.Cols; c++ {
-		// 					if m.Cells[r][c].Set == set2 {
-		// 						m.Cells[r][c].Set = set1
-		// 					}
-		// 				}
-		// 			}
-		// 		} else {
-		// 			m.Cells[row][col].Right = true
-		// 		}
-		// 	}
-		// 	index++
-		// }
-
-		// Обработка нижних стенок
-		for col := 0; col < m.Cols; col++ {
-			set := m.Cells[row][col].Set
-			count := 0
-
-			// Подсчет ячеек без нижней границы
-			for c := 0; c < m.Cols; c++ {
-				if m.Cells[row][c].Set == set && !m.Cells[row][c].Bottom {
-					count++
-				}
-			}
-
-			if count > 1 {
-				fmt.Printf("randomNumbers[index] bottom = %d\n", randomNumbers[index])
-				if randomNumbers[index] == 1 {
-					m.Cells[row][col].Bottom = true
-				}
-			}
-			index++
-		}
-
-		// Если это последняя строка, добавляем нижние стенки
 		if row == m.Rows-1 {
 			m.addBottomWalls(row)
 			m.mergeLastRowSets(row)
@@ -222,22 +178,23 @@ func (m *Maze) mergeSets(set1, set2 int) {
 
 func NewGame(rows, cols int) *Game {
 	maze := NewMaze(rows, cols)
-	// maze.Initialize(rows, cols)
-	// maze.Generate(0, 0)
-	// r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
-	// numRandomNumbers := rows * cols * 2
-	// randomNumbers := make([]int, numRandomNumbers)
-	// for i := range randomNumbers {
-	// 	randomNumbers[i] = r.Intn(2) // Генерация 0 или 1
-	// }
-	randomNumbers := make([]int, 0) // Для 4 строк по 4 столбца
-	randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
+	r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
+	numRandomNumbers := rows * cols * 2
+	randomNumbers := make([]int, numRandomNumbers)
+	for i := range randomNumbers {
+		randomNumbers[i] = r.Intn(2) // Генерация 0 или 1
+	}
+	/*
+		// maze.Initialize(rows, cols)
+		// maze.Generate(0, 0)
+		// randomNumbers := make([]int, 0) // Для 4 строк по 4 столбца
+		// randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
+	*/
 	maze.GenerateEller(randomNumbers)
 	cellSize := float32(sceneWidth) / float32(cols)
 	return &Game{maze: maze, cellSize: cellSize}
 }
 
-// Update обновляет состояние игры
 func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
@@ -356,51 +313,43 @@ func LoadMaze(filename string) (*Maze, error) {
 	for i := range maze.Cells {
 		maze.Cells[i] = make([]Cell, cols)
 	}
-
-	// Читаем первую матрицу (стенки справа)
-	for y := 0; y < rows; y++ {
-		if !scanner.Scan() {
-			return nil, fmt.Errorf("ошибка при чтении стенок справа в строке %d: %v", y, scanner.Err())
-		}
-		for x := 0; x < cols; x++ {
-			var wall int
-			_, err = fmt.Sscanf(scanner.Text()[x*2:x*2+1], "%d", &wall) // Предполагаем, что данные разделены пробелами
-			if err != nil {
-				return nil, fmt.Errorf("ошибка при парсинге стенки справа в строке %d, столбце %d: %v", y, x, err)
-			}
-			if wall == 1 {
-				maze.Cells[y][x].Right = true
-
-			}
-			fmt.Printf("Строка %d, столбец %d: стенка справа = %d\n", y, x, wall)
-		}
+	// Чтение матриц стенок
+	if err := readWalls(scanner, maze, rows, cols, "правых"); err != nil {
+		return nil, err
 	}
-
 	// Пропускаем пустую строку между матрицами
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("ошибка при чтении пустой строки между матрицами: %v", scanner.Err())
 	}
 
-	// Читаем вторую матрицу (стенки снизу)
+	if err := readWalls(scanner, maze, rows, cols, "нижних"); err != nil {
+		return nil, err
+	}
+	fmt.Println("Загрузка лабиринта завершена успешно.")
+	return maze, nil
+}
+
+func readWalls(scanner *bufio.Scanner, maze *Maze, rows, cols int, wallType string) error {
 	for y := 0; y < rows; y++ {
 		if !scanner.Scan() {
-			return nil, fmt.Errorf("ошибка при чтении стенок снизу в строке %d: %v", y, scanner.Err())
+			return fmt.Errorf("ошибка при чтении стенок %s в строке %d: %v", wallType, y, scanner.Err())
 		}
 		for x := 0; x < cols; x++ {
 			var wall int
-			_, err = fmt.Sscanf(scanner.Text()[x*2:x*2+1], "%d", &wall) // Предполагаем, что данные разделены пробелами
+			_, err := fmt.Sscanf(scanner.Text()[x*2:x*2+1], "%d", &wall) // Предполагаем, что данные разделены пробелами
 			if err != nil {
-				return nil, fmt.Errorf("ошибка при парсинге стенки снизу в строке %d, столбце %d: %v", y, x, err)
+				return fmt.Errorf("ошибка при парсинге стенки %s в строке %d, столбце %d: %v", wallType, y, x, err)
 			}
 			if wall == 1 {
-				maze.Cells[y][x].Bottom = true
+				if wallType == "правых" {
+					maze.Cells[y][x].Right = true
+				} else {
+					maze.Cells[y][x].Bottom = true
+				}
 			}
-			fmt.Printf("Строка %d, столбец %d: стенка снизу = %d\n", y, x, wall)
 		}
 	}
-
-	fmt.Println("Загрузка лабиринта завершена успешно.")
-	return maze, nil
+	return nil
 }
 
 // SaveMaze сохраняет лабиринт в файл в указанном формате
