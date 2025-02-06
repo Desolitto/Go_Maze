@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"go-maze/config"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -17,14 +19,14 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-const (
-	maxSize         = 50
-	wallThickness   = 2
-	sceneWidth      = 500
-	sceneHeight     = 500 // Высота лабиринта
-	buttonHeight    = 30
-	borderThickness = float32(2)
-)
+// const (
+// 	maxSize         = 50
+// 	wallThickness   = 2
+// 	SceneWidth      = 500
+// 	SceneHeight     = 500 // Высота лабиринта
+// 	ButtonHeight    = 30
+// 	BorderThickness = float32(2)
+// )
 
 type Cell struct {
 	Right  bool
@@ -43,7 +45,7 @@ type Game struct {
 }
 
 func NewMaze(rows, cols int) *Maze {
-	ebiten.SetWindowSize(sceneWidth+int(borderThickness*2), sceneHeight+buttonHeight+int(borderThickness))
+	ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight+int(config.BorderThickness))
 	cells := make([][]Cell, rows)
 	for i := range cells {
 		cells[i] = make([]Cell, cols)
@@ -191,7 +193,7 @@ func NewGame(rows, cols int) *Game {
 		// randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
 	*/
 	maze.GenerateEller(randomNumbers)
-	cellSize := float32(sceneWidth) / float32(cols)
+	cellSize := float32(config.SceneWidth) / float32(cols)
 	return &Game{maze: maze, cellSize: cellSize}
 }
 
@@ -199,7 +201,7 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 
-		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(config.SceneHeight+config.BorderThickness), config.ButtonHeight) {
 			go g.ShowFileSelector()
 		}
 	}
@@ -208,7 +210,7 @@ func (g *Game) Update() error {
 
 func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float32) bool {
 	buttonX := float32(0)
-	buttonWidth := float32(sceneHeight + borderThickness*2)
+	buttonWidth := float32(config.SceneHeight + config.BorderThickness*2)
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
 }
 
@@ -252,29 +254,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 			// Рисуем правую границу
 			if x < g.maze.Cols-1 && g.maze.Cells[y][x].Right {
-				vector.StrokeLine(screen, float32(x+1)*g.cellSize, float32(y)*g.cellSize, float32(x+1)*g.cellSize, float32(y+1)*g.cellSize, wallThickness, strokeColor, false)
+				vector.StrokeLine(screen, float32(x+1)*g.cellSize, float32(y)*g.cellSize, float32(x+1)*g.cellSize, float32(y+1)*g.cellSize, config.WallThickness, strokeColor, false)
 			}
 
 			// Рисуем нижнюю границу
 			if y < g.maze.Rows-1 && g.maze.Cells[y][x].Bottom {
-				vector.StrokeLine(screen, float32(x)*g.cellSize, float32(y+1)*g.cellSize, float32(x+1)*g.cellSize, float32(y+1)*g.cellSize, wallThickness, strokeColor, false)
+				vector.StrokeLine(screen, float32(x)*g.cellSize, float32(y+1)*g.cellSize, float32(x+1)*g.cellSize, float32(y+1)*g.cellSize, config.WallThickness, strokeColor, false)
 			}
 		}
 	}
-	g.drawButton(screen, "Open maze", float32(sceneHeight+borderThickness), strokeColor)
+	g.drawButton(screen, "Open maze", float32(config.SceneHeight+config.BorderThickness), strokeColor)
 }
 
 func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float32, color color.RGBA) {
-	buttonWidth := float32(sceneWidth + borderThickness*2)
-	buttonHeight := float32(30)
+	buttonWidth := float32(config.SceneWidth + config.BorderThickness*2)
 
-	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, buttonHeight, color, false)
+	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, config.ButtonHeight, color, false)
 
 	textWidth := float32(len(buttonText) * 8)
 	textHeight := float32(16)
 
 	textX := (buttonWidth - textWidth) / 2
-	textY := buttonY + (buttonHeight-textHeight)/2
+	textY := buttonY + (config.ButtonHeight-textHeight)/2
 
 	ebitenutil.DebugPrintAt(screen, buttonText, int(textX), int(textY))
 }
@@ -403,8 +404,8 @@ func boolToInt(b bool) int {
 }
 
 func main() {
-	w := flag.Int("w", maxSize, "количество строк в лабиринте")
-	h := flag.Int("h", maxSize, "количество столбцов в лабиринте")
+	w := flag.Int("w", config.MaxSize, "количество строк в лабиринте")
+	h := flag.Int("h", config.MaxSize, "количество столбцов в лабиринте")
 	flag.Parse()
 
 	game := NewGame(*w, *h)
