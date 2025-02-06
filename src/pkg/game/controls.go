@@ -9,7 +9,7 @@ import (
 
 func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float32) bool {
 	buttonX := float32(0)
-	buttonWidth := float32(caveWidth + borderThickness*2)
+	buttonWidth := float32(sceneWidth + borderThickness*2)
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
 }
 

@@ -6,21 +6,22 @@ import (
 	"fmt"
 	"image/color"
 	"log"
-	"math/rand"
 	"os"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/sqweek/dialog"
+	"golang.org/x/exp/rand"
 )
 
 const (
-	maxMazeSize     = 50
+	maxSize         = 50
 	wallThickness   = 2
-	mazeWidth       = 500
-	mazeHeight      = 500 // Высота лабиринта
+	sceneWidth      = 500
+	sceneHeight     = 500 // Высота лабиринта
 	buttonHeight    = 30
 	borderThickness = float32(2)
 )
@@ -42,7 +43,7 @@ type Game struct {
 }
 
 func NewMaze(rows, cols int) *Maze {
-	ebiten.SetWindowSize(mazeWidth+int(borderThickness*2), mazeHeight+buttonHeight+int(borderThickness))
+	ebiten.SetWindowSize(sceneWidth+int(borderThickness*2), sceneHeight+buttonHeight+int(borderThickness))
 	cells := make([][]Cell, rows)
 	for i := range cells {
 		cells[i] = make([]Cell, cols)
@@ -53,68 +54,7 @@ func NewMaze(rows, cols int) *Maze {
 	return &Maze{Rows: rows, Cols: cols, Cells: cells}
 }
 
-// Инициализация лабиринта
-func (m *Maze) Initialize(rows, cols int) {
-	m.Rows = rows
-	m.Cols = cols
-	m.Cells = make([][]Cell, rows)
-
-	for y := 0; y < rows; y++ {
-		m.Cells[y] = make([]Cell, cols)
-		for x := 0; x < cols; x++ {
-			// Устанавливаем все стенки по умолчанию
-			m.Cells[y][x].Right = true
-			m.Cells[y][x].Bottom = true
-		}
-	}
-}
-
-func (m *Maze) Generate(x, y int) {
-	visited := make([][]bool, m.Rows)
-	for i := range visited {
-		visited[i] = make([]bool, m.Cols)
-	}
-
-	stack := []struct{ x, y int }{{x, y}}
-	visited[y][x] = true
-
-	directions := []struct {
-		dx, dy int
-	}{
-		{1, 0},  // вправо
-		{0, 1},  // вниз
-		{-1, 0}, // влево
-		{0, -1}, // вверх
-	}
-
-	for len(stack) > 0 {
-		curr := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-
-		rand.Shuffle(len(directions), func(i, j int) {
-			directions[i], directions[j] = directions[j], directions[i]
-		})
-
-		for _, dir := range directions {
-			newX, newY := curr.x+dir.dx, curr.y+dir.dy
-			if newX >= 0 && newX < m.Cols && newY >= 0 && newY < m.Rows && !visited[newY][newX] {
-				if dir.dx == 1 { // вправо
-					m.Cells[curr.y][curr.x].Right = false
-				} else if dir.dy == 1 { // вниз
-					m.Cells[curr.y][curr.x].Bottom = false
-				} else if dir.dx == -1 { // влево
-					m.Cells[newY][newX].Right = false
-				} else if dir.dy == -1 { // вверх
-					m.Cells[newY][newX].Bottom = false
-				}
-
-				visited[newY][newX] = true
-				stack = append(stack, struct{ x, y int }{newX, newY})
-			}
-		}
-	}
-}
-func (m *Maze) copyPreviousRow(row, currentSetCount int) {
+func (m *Maze) copyPreviousRow(row int) {
 	for col := 0; col < m.Cols; col++ {
 		m.Cells[row][col].Right = m.Cells[row-1][col].Right
 		m.Cells[row][col].Bottom = m.Cells[row-1][col].Bottom
@@ -128,15 +68,9 @@ func (m *Maze) copyPreviousRow(row, currentSetCount int) {
 		}
 	}
 	// Присваиваем новые множества для следующей строки
-	for col := 0; col < m.Cols; col++ {
-		if m.Cells[row][col].Set == 0 {
-			m.Cells[row][col].Set = currentSetCount
-			currentSetCount++
-		}
-	}
+
 }
 func (m *Maze) GenerateEller(randomNumbers []int) {
-	// Инициализация ячеек
 	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
 			m.Cells[row][col].Set = row*m.Cols + col + 1 // Множества начинаются с 1
@@ -148,29 +82,30 @@ func (m *Maze) GenerateEller(randomNumbers []int) {
 	for col := 0; col < m.Cols; col++ {
 		m.Cells[0][col].Set = col + 1 // Присваиваем множества начиная с 1
 		currentSetCount++
-		fmt.Printf(" set %d curr - %d\n", m.Cells[0][col].Set, currentSetCount)
+		// fmt.Printf(" set %d curr - %d\n", m.Cells[0][col].Set, currentSetCount)
 	}
 
 	for row := 0; row < m.Rows; row++ {
 		fmt.Println(row)
 		if row > 0 {
-			m.copyPreviousRow(row, currentSetCount)
+			m.copyPreviousRow(row)
+			for col := 0; col < m.Cols; col++ {
+				if m.Cells[row][col].Set == 0 {
+					m.Cells[row][col].Set = currentSetCount
+					currentSetCount++
+				}
+			}
 		}
 		// Обработка правых стенок
 		for col := 0; col < m.Cols-1; col++ {
-			fmt.Printf("Перед установкой стенки: Cell(%d, %d) Set=%d\n\n", row, col, m.Cells[row][col].Set)
-			fmt.Printf("randomNumbers[index] right = %d\n", randomNumbers[index])
 			if randomNumbers[index] == 1 {
 				// Ставим стенку
 				m.Cells[row][col].Right = true
-				fmt.Printf("После установкой стенки: Cell(%d, %d) Set=%d\n", row, col, m.Cells[row][col].Set)
 			} else {
-				// Не ставим стенку, объединяем множества
 				set1 := m.Cells[row][col].Set
 				set2 := m.Cells[row][col+1].Set
 
 				if set1 != set2 {
-					// Объединяем множества
 					for r := 0; r < m.Rows; r++ {
 						for c := 0; c < m.Cols; c++ {
 							if m.Cells[r][c].Set == set2 {
@@ -179,7 +114,6 @@ func (m *Maze) GenerateEller(randomNumbers []int) {
 						}
 					}
 				} else {
-					// Ставим стенку, если множества совпадают
 					m.Cells[row][col].Right = true
 				}
 			}
@@ -249,14 +183,16 @@ func NewGame(rows, cols int) *Game {
 	maze := NewMaze(rows, cols)
 	// maze.Initialize(rows, cols)
 	// maze.Generate(0, 0)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
 	numRandomNumbers := rows * cols * 2
 	randomNumbers := make([]int, numRandomNumbers)
 	for i := range randomNumbers {
 		randomNumbers[i] = r.Intn(2) // Генерация 0 или 1
 	}
+	// randomNumbers := make([]int, 0) // Для 4 строк по 4 столбца
+	// randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
 	maze.GenerateEller(randomNumbers)
-	cellSize := float32(mazeWidth) / float32(cols)
+	cellSize := float32(sceneWidth) / float32(cols)
 	return &Game{maze: maze, cellSize: cellSize}
 }
 
@@ -265,7 +201,7 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 
-		if g.isInsideButton(float32(x), float32(y), float32(mazeHeight+borderThickness), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness), buttonHeight) {
 			go g.ShowFileSelector()
 		}
 	}
@@ -274,7 +210,7 @@ func (g *Game) Update() error {
 
 func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float32) bool {
 	buttonX := float32(0)
-	buttonWidth := float32(mazeHeight + borderThickness*2)
+	buttonWidth := float32(sceneHeight + borderThickness*2)
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
 }
 
@@ -327,17 +263,27 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 	}
+	g.drawButton(screen, "Open maze", float32(sceneHeight+borderThickness), strokeColor)
+}
 
-	// Рисуем кнопку под лабиринтом
-	buttonY := mazeHeight
-	buttonWidth := mazeWidth
-	vector.DrawFilledRect(screen, 0, float32(buttonY), float32(buttonWidth), float32(buttonHeight), color.RGBA{200, 200, 200, 255}, false)
-	vector.StrokeLine(screen, 0, float32(buttonY), float32(buttonWidth), float32(buttonY), wallThickness, strokeColor, false)
+func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float32, color color.RGBA) {
+	buttonWidth := float32(sceneWidth + borderThickness*2)
+	buttonHeight := float32(30)
+
+	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, buttonHeight, color, false)
+
+	textWidth := float32(len(buttonText) * 8)
+	textHeight := float32(16)
+
+	textX := (buttonWidth - textWidth) / 2
+	textY := buttonY + (buttonHeight-textHeight)/2
+
+	ebitenutil.DebugPrintAt(screen, buttonText, int(textX), int(textY))
 }
 
 // Layout определяет размер окна
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return mazeWidth, mazeHeight + buttonHeight // Общая высота с кнопкой
+func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
+	return outsideWidth, outsideHeight
 }
 
 func LoadMaze(filename string) (*Maze, error) {
@@ -467,8 +413,8 @@ func boolToInt(b bool) int {
 }
 
 func main() {
-	w := flag.Int("w", maxMazeSize, "количество строк в лабиринте")
-	h := flag.Int("h", maxMazeSize, "количество столбцов в лабиринте")
+	w := flag.Int("w", maxSize, "количество строк в лабиринте")
+	h := flag.Int("h", maxSize, "количество столбцов в лабиринте")
 	flag.Parse()
 
 	game := NewGame(*w, *h)
@@ -483,3 +429,66 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+/* ================== old code ========================== */
+
+// func (m *Maze) Initialize(rows, cols int) {
+// 	m.Rows = rows
+// 	m.Cols = cols
+// 	m.Cells = make([][]Cell, rows)
+
+// 	for y := 0; y < rows; y++ {
+// 		m.Cells[y] = make([]Cell, cols)
+// 		for x := 0; x < cols; x++ {
+// 			// Устанавливаем все стенки по умолчанию
+// 			m.Cells[y][x].Right = true
+// 			m.Cells[y][x].Bottom = true
+// 		}
+// 	}
+// }
+
+// func (m *Maze) Generate(x, y int) {
+// 	visited := make([][]bool, m.Rows)
+// 	for i := range visited {
+// 		visited[i] = make([]bool, m.Cols)
+// 	}
+
+// 	stack := []struct{ x, y int }{{x, y}}
+// 	visited[y][x] = true
+
+// 	directions := []struct {
+// 		dx, dy int
+// 	}{
+// 		{1, 0},  // вправо
+// 		{0, 1},  // вниз
+// 		{-1, 0}, // влево
+// 		{0, -1}, // вверх
+// 	}
+
+// 	for len(stack) > 0 {
+// 		curr := stack[len(stack)-1]
+// 		stack = stack[:len(stack)-1]
+
+// 		rand.Shuffle(len(directions), func(i, j int) {
+// 			directions[i], directions[j] = directions[j], directions[i]
+// 		})
+
+// 		for _, dir := range directions {
+// 			newX, newY := curr.x+dir.dx, curr.y+dir.dy
+// 			if newX >= 0 && newX < m.Cols && newY >= 0 && newY < m.Rows && !visited[newY][newX] {
+// 				if dir.dx == 1 { // вправо
+// 					m.Cells[curr.y][curr.x].Right = false
+// 				} else if dir.dy == 1 { // вниз
+// 					m.Cells[curr.y][curr.x].Bottom = false
+// 				} else if dir.dx == -1 { // влево
+// 					m.Cells[newY][newX].Right = false
+// 				} else if dir.dy == -1 { // вверх
+// 					m.Cells[newY][newX].Bottom = false
+// 				}
+
+// 				visited[newY][newX] = true
+// 				stack = append(stack, struct{ x, y int }{newX, newY})
+// 			}
+// 		}
+// 	}
+// }

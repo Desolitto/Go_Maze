@@ -25,17 +25,17 @@ func (g *Game) LoadCaveFromFile(filename string) {
 		}
 
 		width, err := strconv.Atoi(dimensions[0])
-		if err != nil || width > maxCaveSize {
+		if err != nil || width > maxSize {
 			log.Fatal("Неверная ширина пещеры.")
 		}
 
 		height, err := strconv.Atoi(dimensions[1])
-		if err != nil || height > maxCaveSize {
+		if err != nil || height > maxSize {
 			log.Fatal("Неверная высота пещеры.")
 		}
 
 		g.width, g.height = width, height
-		g.cellSize = float32(caveWidth) / float32(width)
+		g.cellSize = float32(sceneWidth) / float32(width)
 		g.cave = cave.NewCave(width, height)
 
 		for y := 0; y < height; y++ {

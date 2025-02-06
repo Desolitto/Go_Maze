@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	maxCaveSize     = 50
+	maxSize         = 50
 	wallThickness   = 2
-	caveWidth       = 500
-	caveHeight      = 500
+	sceneWidth      = 500
+	sceneHeight     = 500
 	buttonHeight    = 30
 	borderThickness = float32(2)
 )
@@ -36,12 +36,12 @@ type Game struct {
 }
 
 func NewGame(w, h, birthLimit, deathLimit, initialChance int) *Game {
-	if w > maxCaveSize || h > maxCaveSize {
-		log.Fatalf("Размер лабиринта не должен превышать %d", maxCaveSize)
+	if w > maxSize || h > maxSize {
+		log.Fatalf("Размер лабиринта не должен превышать %d", maxSize)
 	}
-	ebiten.SetWindowSize(caveWidth+int(borderThickness*2), caveHeight+buttonHeight*3+int(borderThickness))
+	ebiten.SetWindowSize(sceneWidth+int(borderThickness*2), sceneHeight+buttonHeight*3+int(borderThickness))
 	ebiten.SetWindowTitle("Cave Generator")
-	cellSize := float32(caveWidth) / float32(w)
+	cellSize := float32(sceneWidth) / float32(w)
 	cave := cave.NewCave(w, h)
 	cave.GenerateCave(initialChance, birthLimit, deathLimit)
 	return &Game{
@@ -62,16 +62,16 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 
-		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness), buttonHeight) {
 			go g.ShowFileSelector()
 		}
 
-		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness+buttonHeight), buttonHeight) {
 			g.Step()
 			g.autoStepActive = false
 		}
 
-		if g.isInsideButton(float32(x), float32(y), float32(caveHeight+borderThickness+buttonHeight*2), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness+buttonHeight*2), buttonHeight) {
 			g.autoStepActive = !g.autoStepActive
 		}
 	}
