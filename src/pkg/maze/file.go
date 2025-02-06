@@ -3,7 +3,11 @@ package maze
 import (
 	"bufio"
 	"fmt"
+	"go-maze/config"
+	"log"
 	"os"
+
+	"github.com/sqweek/dialog"
 )
 
 func LoadMaze(filename string) (*Maze, error) {
@@ -72,4 +76,38 @@ func (m *Maze) SaveMaze(filename string) error {
 	}
 
 	return m.WriteWalls(file, false)
+}
+
+func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float32) bool {
+	buttonX := float32(0)
+	buttonWidth := float32(config.SceneHeight + config.BorderThickness*2)
+	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
+}
+
+func (g *Game) ShowFileSelector() {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Println("Ошибка при получении текущей директории:", err)
+		return
+	}
+
+	filename, err := dialog.File().
+		Filter("Text files", "txt").
+		SetStartDir(currentDir).
+		Load()
+
+	if err != nil {
+		log.Println("Ошибка при выборе файла:", err)
+		return
+	}
+
+	// Загружаем лабиринт из выбранного файла
+	mazeNew, err := LoadMaze(filename)
+	if err != nil {
+		log.Println("Ошибка при загрузке лабиринта:", err)
+		return
+	}
+
+	// Обновляем состояние игры с новым лабиринтом
+	g.maze = mazeNew
 }

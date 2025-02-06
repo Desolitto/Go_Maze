@@ -121,3 +121,66 @@ func (m *Maze) mergeSets(set1, set2 int) {
 		}
 	}
 }
+
+/* ================== old code ========================== */
+
+// func (m *Maze) Initialize(rows, cols int) {
+// 	m.Rows = rows
+// 	m.Cols = cols
+// 	m.Cells = make([][]Cell, rows)
+
+// 	for y := 0; y < rows; y++ {
+// 		m.Cells[y] = make([]Cell, cols)
+// 		for x := 0; x < cols; x++ {
+// 			// Устанавливаем все стенки по умолчанию
+// 			m.Cells[y][x].Right = true
+// 			m.Cells[y][x].Bottom = true
+// 		}
+// 	}
+// }
+
+// func (m *Maze) Generate(x, y int) {
+// 	visited := make([][]bool, m.Rows)
+// 	for i := range visited {
+// 		visited[i] = make([]bool, m.Cols)
+// 	}
+
+// 	stack := []struct{ x, y int }{{x, y}}
+// 	visited[y][x] = true
+
+// 	directions := []struct {
+// 		dx, dy int
+// 	}{
+// 		{1, 0},  // вправо
+// 		{0, 1},  // вниз
+// 		{-1, 0}, // влево
+// 		{0, -1}, // вверх
+// 	}
+
+// 	for len(stack) > 0 {
+// 		curr := stack[len(stack)-1]
+// 		stack = stack[:len(stack)-1]
+
+// 		rand.Shuffle(len(directions), func(i, j int) {
+// 			directions[i], directions[j] = directions[j], directions[i]
+// 		})
+
+// 		for _, dir := range directions {
+// 			newX, newY := curr.x+dir.dx, curr.y+dir.dy
+// 			if newX >= 0 && newX < m.Cols && newY >= 0 && newY < m.Rows && !visited[newY][newX] {
+// 				if dir.dx == 1 { // вправо
+// 					m.Cells[curr.y][curr.x].Right = false
+// 				} else if dir.dy == 1 { // вниз
+// 					m.Cells[curr.y][curr.x].Bottom = false
+// 				} else if dir.dx == -1 { // влево
+// 					m.Cells[newY][newX].Right = false
+// 				} else if dir.dy == -1 { // вверх
+// 					m.Cells[newY][newX].Bottom = false
+// 				}
+
+// 				visited[newY][newX] = true
+// 				stack = append(stack, struct{ x, y int }{newX, newY})
+// 			}
+// 		}
+// 	}
+// }
