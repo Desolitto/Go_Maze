@@ -18,6 +18,7 @@ func main() {
 
 	game := maze.NewGame(*w, *h)
 	fmt.Println("Сгенерированный лабиринт:")
+
 	err := game.Maze().SaveMaze("maze.txt")
 
 	if err != nil {
