@@ -3,6 +3,7 @@ package maze
 import (
 	"go-maze/config"
 	"image/color"
+	"log"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -18,6 +19,12 @@ type Game struct {
 }
 
 func NewGame(rows, cols int) *Game {
+	if rows > config.MaxSize || cols > config.MaxSize {
+		log.Fatalf("Размер лабиринта не должен превышать %d", config.MaxSize)
+	}
+	ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight*3+int(config.BorderThickness))
+	ebiten.SetWindowTitle("Cave Generator")
+	cellSize := float32(config.SceneWidth) / float32(cols)
 	maze := NewMaze(rows, cols)
 	r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
 	numRandomNumbers := rows * cols * 2
@@ -32,7 +39,6 @@ func NewGame(rows, cols int) *Game {
 		// randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
 	*/
 	maze.GenerateEller(randomNumbers)
-	cellSize := float32(config.SceneWidth) / float32(cols)
 	return &Game{maze: maze, cellSize: cellSize}
 }
 
@@ -51,11 +57,12 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	strokeColor := color.RGBA{0, 0, 0, 255}
 	fillColor := color.RGBA{255, 255, 255, 255}
-
+	mazeX := float32(0)
+	mazeY := float32(0)
 	// Рисуем лабиринт
 	for y := 0; y < g.maze.Rows; y++ {
 		for x := 0; x < g.maze.Cols; x++ {
-			vector.DrawFilledRect(screen, float32(x)*g.cellSize, float32(y)*g.cellSize, g.cellSize, g.cellSize, fillColor, false)
+			vector.DrawFilledRect(screen, mazeX+float32(x)*g.cellSize, mazeY+float32(y)*g.cellSize, g.cellSize, g.cellSize, fillColor, false)
 
 			// Рисуем правую границу
 			if x < g.maze.Cols-1 && g.maze.Cells[y][x].Right {

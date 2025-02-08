@@ -10,10 +10,10 @@ import (
 	"github.com/sqweek/dialog"
 )
 
-func LoadMaze(filename string) (*Maze, error) {
+func LoadMaze(filename string, windowWidth, windowHeight int) (*Maze, float32, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при открытии файла: %v", err)
+		return nil, 0, fmt.Errorf("ошибка при открытии файла: %w", err)
 	}
 	defer file.Close()
 
@@ -21,12 +21,12 @@ func LoadMaze(filename string) (*Maze, error) {
 
 	// Читаем размеры лабиринта
 	if !scanner.Scan() {
-		return nil, fmt.Errorf("ошибка при чтении размеров лабиринта: %v", scanner.Err())
+		return nil, 0, fmt.Errorf("ошибка при чтении размеров лабиринта: %v", scanner.Err())
 	}
 	var rows, cols int
 	_, err = fmt.Sscanf(scanner.Text(), "%d %d", &rows, &cols)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при парсинге размеров лабиринта: %v", err)
+		return nil, 0, fmt.Errorf("ошибка при парсинге размеров лабиринта: %v", err)
 	}
 	fmt.Printf("Размеры лабиринта: %d строк, %d столбцов\n", rows, cols)
 
@@ -41,18 +41,22 @@ func LoadMaze(filename string) (*Maze, error) {
 	}
 	// Чтение матриц стенок
 	if err := ReadWalls(scanner, maze, rows, cols, "правых"); err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("ошибка при чтении правых стен: %v", err)
 	}
 	// Пропускаем пустую строку между матрицами
 	if !scanner.Scan() {
-		return nil, fmt.Errorf("ошибка при чтении пустой строки между матрицами: %v", scanner.Err())
+		return nil, 0, fmt.Errorf("ошибка при чтении пустой строки между матрицами: %v", scanner.Err())
 	}
 
 	if err := ReadWalls(scanner, maze, rows, cols, "нижних"); err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("ошибка при чтении нижних стен: %v", err)
 	}
+
+	// Вычисляем размер ячейки
+	cellSize := float32(windowWidth) / float32(cols)
+
 	fmt.Println("Загрузка лабиринта завершена успешно.")
-	return maze, nil
+	return maze, cellSize, nil
 }
 
 // SaveMaze сохраняет лабиринт в файл в указанном формате
@@ -102,7 +106,7 @@ func (g *Game) ShowFileSelector() {
 	}
 
 	// Загружаем лабиринт из выбранного файла
-	mazeNew, err := LoadMaze(filename)
+	mazeNew, cellSize, err := LoadMaze(filename, config.SceneWidth, config.SceneHeight)
 	if err != nil {
 		log.Println("Ошибка при загрузке лабиринта:", err)
 		return
@@ -110,4 +114,5 @@ func (g *Game) ShowFileSelector() {
 
 	// Обновляем состояние игры с новым лабиринтом
 	g.maze = mazeNew
+	g.cellSize = cellSize
 }
