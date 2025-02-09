@@ -89,6 +89,7 @@ func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float3
 }
 
 func (g *Game) ShowFileSelector() {
+
 	currentDir, err := os.Getwd()
 	if err != nil {
 		log.Println("Ошибка при получении текущей директории:", err)
@@ -115,4 +116,6 @@ func (g *Game) ShowFileSelector() {
 	// Обновляем состояние игры с новым лабиринтом
 	g.maze = mazeNew
 	g.cellSize = cellSize
+	g.ResetGame()
+
 }
