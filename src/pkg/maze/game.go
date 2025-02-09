@@ -33,20 +33,23 @@ type MazeSolving struct {
 	currentY      int
 	isStartSet    bool
 	isEndSet      bool
-	// path          []Point // Для хранения найденного пути
+	path          []Point // Для хранения найденного пути
+}
+
+type Point struct {
+	X int
+	Y int
 }
 
 // type Point struct {
 // 	x, y int
 // }
 
+// Конструктор MazeSolving
 func NewMazeSolving(maze *Maze, startX, startY, endX, endY int) *MazeSolving {
 	solvingMatrix := make([][]int, maze.Rows)
 	for i := range solvingMatrix {
 		solvingMatrix[i] = make([]int, maze.Cols)
-		for j := range solvingMatrix[i] {
-			solvingMatrix[i][j] = config.MaxSize * config.MaxSize // Инициализируем максимальным значением
-		}
 	}
 	return &MazeSolving{
 		mazeInfo:      maze,
@@ -59,6 +62,7 @@ func NewMazeSolving(maze *Maze, startX, startY, endX, endY int) *MazeSolving {
 		currentY:      startY,
 		isStartSet:    startX >= 0 && startY >= 0,
 		isEndSet:      endX >= 0 && endY >= 0,
+		path:          []Point{},
 	}
 }
 
@@ -67,88 +71,65 @@ func (m *MazeSolving) Solve() error {
 	if !m.isStartSet || !m.isEndSet {
 		return fmt.Errorf("начальная и конечная точки должны быть установлены")
 	}
-	return m.findPath(m.startX, m.startY)
-}
-
-// Метод findPath ищет путь в лабиринте
-func (m *MazeSolving) findPath(x, y int) error {
-	log.Printf("Проверяем клетку (%d, %d)", x, y)
-
-	if x == m.endX && y == m.endY {
-		m.solvingMatrix[y][x] = 1
-		log.Printf("Достигнута конечная точка (%d, %d)", x, y)
+	m.path = []Point{} // Очищаем предыдущий путь
+	log.Println("Запуск решения лабиринта...")
+	if m.dfs(m.startX, m.startY) {
+		log.Println("Путь найден:", m.path)
 		return nil
 	}
-
-	// Проверяем, если клетка уже посещена
-	if m.solvingMatrix[y][x] == 1 {
-		log.Printf("Клетка (%d, %d) уже посещена, пропускаем", x, y)
-		return fmt.Errorf("путь не найден")
-	}
-
-	m.solvingMatrix[y][x] = 1 // Помечаем текущую клетку как посещенную
-
-	// Перебираем возможные направления
-	directions := [][3]int{
-		{0, -1, 0},  // Вверх
-		{1, 0, 1},   // Вправо
-		{0, 1, 0},   // Вниз
-		{-1, 0, -1}, // Влево
-	}
-
-	for _, dir := range directions {
-		newX := x + dir[0]
-		newY := y + dir[1]
-
-		if m.isValidMove(newX, newY, dir[0], dir[1]) {
-			log.Printf("Пытаемся двигаться в (%d, %d)", newX, newY)
-			err := m.findPath(newX, newY)
-			if err == nil {
-				return nil
-			}
-		}
-	}
-
-	m.solvingMatrix[y][x] = 0 // Возвращаемся, если путь не найден
-	log.Printf("Возврат из клетки (%d, %d) - путь не найден", x, y)
-	return fmt.Errorf("путь не найден")
+	return fmt.Errorf("не удалось найти путь")
 }
 
-// Проверка, можно ли сделать ход
-func (m *MazeSolving) isValidMove(x, y, dirX, dirY int) bool {
-	// Проверяем границы
+func (m *MazeSolving) dfs(x, y int) bool {
 	if x < 0 || x >= m.mazeInfo.Cols || y < 0 || y >= m.mazeInfo.Rows {
-		log.Printf("Недоступный ход в (%d, %d) - выход за границы", x, y)
-		return false
+		log.Printf("Выход за границы: (%d, %d)\n", x, y)
+		return false // Выход за границы
+	}
+	if m.solvingMatrix[y][x] == 1 {
+		log.Printf("Уже посещенная клетка: (%d, %d)\n", x, y)
+		return false // Уже посещенная клетка
+	}
+	if x == m.endX && y == m.endY {
+		m.path = append(m.path, Point{X: x, Y: y}) // Добавляем конечную точку в путь
+		log.Printf("Найдена конечная точка: (%d, %d)\n", x, y)
+		return true // Найден путь
 	}
 
-	// Проверяем наличие стен в зависимости от направления
-	if dirX == 1 { // Движение вправо
-		if m.mazeInfo.Cells[y][x].Right {
-			log.Printf("Недоступный ход в (%d, %d) - есть правая стена", x, y)
-			return false
+	// Помечаем клетку как посещенную
+	m.solvingMatrix[y][x] = 1
+	m.path = append(m.path, Point{X: x, Y: y}) // Добавляем текущую точку в путь
+	log.Printf("Проверяем клетку: (%d, %d)\n", x, y)
+
+	// Пробуем двигаться в четырех направлениях, проверяя наличие стен
+	if x < m.mazeInfo.Cols-1 && !m.mazeInfo.Cells[y][x].Right { // вправо
+		if m.dfs(x+1, y) {
+			return true
 		}
-	} else if dirX == -1 { // Движение влево
-		if x > 0 && m.mazeInfo.Cells[y][x-1].Right {
-			log.Printf("Недоступный ход в (%d, %d) - есть левая стена", x, y)
-			return false
+	}
+	if x > 0 && !m.mazeInfo.Cells[y][x-1].Right { // влево
+		if m.dfs(x-1, y) {
+			return true
+		}
+	}
+	if y < m.mazeInfo.Rows-1 && !m.mazeInfo.Cells[y][x].Bottom { // вниз
+		if m.dfs(x, y+1) {
+			return true
+		}
+	}
+	if y > 0 && !m.mazeInfo.Cells[y-1][x].Bottom { // вверх
+		if m.dfs(x, y-1) {
+			return true
 		}
 	}
 
-	if dirY == 1 { // Движение вниз
-		if m.mazeInfo.Cells[y][x].Bottom {
-			log.Printf("Недоступный ход в (%d, %d) - есть нижняя стена", x, y)
-			return false
-		}
-	} else if dirY == -1 { // Движение вверх
-		if y > 0 && m.mazeInfo.Cells[y-1][x].Bottom {
-			log.Printf("Недоступный ход в (%d, %d) - есть верхняя стена", x, y)
-			return false
-		}
-	}
+	m.path = m.path[:len(m.path)-1] // Удаляем текущую точку из пути, если путь не найден
+	log.Printf("Возвращаемся из клетки: (%d, %d)\n", x, y)
+	return false
+}
 
-	log.Printf("Доступный ход в (%d, %d)", x, y)
-	return true
+// Метод для получения найденного пути
+func (m *MazeSolving) GetPath() []Point {
+	return m.path
 }
 
 /*************************************************************************************************/
@@ -237,12 +218,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.mazeSolving.isEndSet {
 		vector.DrawFilledRect(screen, float32(g.mazeSolving.endX)*g.cellSize, float32(g.mazeSolving.endY)*g.cellSize, g.cellSize, g.cellSize, color.RGBA{255, 0, 0, 255}, false) // Красный цвет
 	}
-	for y := 0; y < g.maze.Rows; y++ {
-		for x := 0; x < g.maze.Cols; x++ {
-			if g.mazeSolving.solvingMatrix[y][x] == 1 {
-				vector.DrawFilledRect(screen, float32(x)*g.cellSize, float32(y)*g.cellSize, g.cellSize, g.cellSize, color.RGBA{0, 0, 255, 128}, false) // Синий цвет для пути
-			}
-		}
+	for _, point := range g.mazeSolving.GetPath() {
+		vector.DrawFilledRect(screen, float32(point.X)*g.cellSize, float32(point.Y)*g.cellSize, g.cellSize, g.cellSize, color.RGBA{0, 0, 255, 128}, false) // Синий цвет для пути
 	}
 }
 
