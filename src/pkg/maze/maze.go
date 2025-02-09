@@ -1,11 +1,5 @@
 package maze
 
-import (
-	"go-maze/config"
-
-	"github.com/hajimehoshi/ebiten/v2"
-)
-
 type Cell struct {
 	Right  bool
 	Bottom bool
@@ -18,7 +12,7 @@ type Maze struct {
 }
 
 func NewMaze(rows, cols int) *Maze {
-	ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight+int(config.BorderThickness))
+	// ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight+int(config.BorderThickness))
 	cells := make([][]Cell, rows)
 	for i := range cells {
 		cells[i] = make([]Cell, cols)

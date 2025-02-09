@@ -138,8 +138,15 @@ func NewGame(rows, cols int) *Game {
 	if rows > config.MaxSize || cols > config.MaxSize {
 		log.Fatalf("Размер лабиринта не должен превышать %d", config.MaxSize)
 	}
-	ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight*3+int(config.BorderThickness))
-	ebiten.SetWindowTitle("Cave Generator")
+	// ebiten.SetWindowSize(500+int(2*2), 1000+30*3+int(2))
+	// Пересчитываем размеры окна
+	windowWidth := config.SceneWidth + int(config.BorderThickness*2)
+	windowHeight := config.SceneHeight + config.ButtonHeight*2 + int(config.BorderThickness)
+
+	ebiten.SetWindowSize(windowWidth, windowHeight)
+	// ebiten.Update()
+	// ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight*6+int(config.BorderThickness))
+	ebiten.SetWindowTitle("Maze")
 	cellSize := float32(config.SceneWidth) / float32(cols)
 	maze := NewMaze(rows, cols)
 	r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
@@ -154,6 +161,8 @@ func NewGame(rows, cols int) *Game {
 		// randomNumbers := make([]int, 0) // Для 4 строк по 4 столбца
 		// randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
 	*/
+	log.Printf("Window size: %d x %d", windowWidth, windowHeight)
+
 	maze.GenerateEller(randomNumbers)
 	mazeSolving := NewMazeSolving(maze, -1, -1, -1, -1) // Начальные и конечные точки пока не установлены
 	return &Game{maze: maze, cellSize: cellSize, mazeSolving: mazeSolving}
@@ -167,6 +176,8 @@ func (g *Game) Update() error {
 
 		if g.isInsideButton(float32(x), float32(y), float32(config.SceneHeight+config.BorderThickness), config.ButtonHeight) {
 			go g.ShowFileSelector()
+		} else if g.isInsideButton(float32(x), float32(y), float32(config.SceneHeight+config.BorderThickness+config.ButtonHeight), config.ButtonHeight) {
+			g.ResetGame() // Сброс игры
 		} else if !g.mazeSolving.isStartSet {
 			g.mazeSolving.startX = cellX
 			g.mazeSolving.startY = cellY
@@ -209,6 +220,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 	g.drawButton(screen, "Open maze", float32(config.SceneHeight+config.BorderThickness), strokeColor)
+	g.drawButton(screen, "Reset", float32(config.SceneHeight+config.BorderThickness+config.ButtonHeight), strokeColor)
 	// Отрисовка начальной точки
 	if g.mazeSolving.isStartSet {
 		vector.DrawFilledRect(screen, float32(g.mazeSolving.startX)*g.cellSize, float32(g.mazeSolving.startY)*g.cellSize, g.cellSize, g.cellSize, color.RGBA{0, 255, 0, 255}, false) // Зеленый цвет
@@ -223,11 +235,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float32, color color.RGBA) {
+func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float32, bcolor color.RGBA) {
 	buttonWidth := float32(config.SceneWidth + config.BorderThickness*2)
 
-	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, config.ButtonHeight, color, false)
+	// Отрисовка кнопки
+	vector.DrawFilledRect(screen, 0, buttonY, buttonWidth, config.ButtonHeight, bcolor, false)
 
+	// Отрисовка текста на кнопке
 	textWidth := float32(len(buttonText) * 8)
 	textHeight := float32(16)
 
@@ -235,6 +249,13 @@ func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float
 	textY := buttonY + (config.ButtonHeight-textHeight)/2
 
 	ebitenutil.DebugPrintAt(screen, buttonText, int(textX), int(textY))
+
+	// Отрисовка границы под кнопкой
+	borderY := buttonY + config.ButtonHeight
+	borderHeight := float32(4)                // Увеличенная высота границы
+	borderColor := color.RGBA{255, 0, 0, 255} // Красный цвет границы
+
+	vector.DrawFilledRect(screen, 0, borderY, buttonWidth, borderHeight, borderColor, false)
 }
 
 // Layout определяет размер окна
@@ -244,4 +265,15 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func (g *Game) Maze() *Maze {
 	return g.maze
+}
+
+func (g *Game) ResetGame() {
+	g.mazeSolving.startX = -1
+	g.mazeSolving.startY = -1
+	g.mazeSolving.endX = -1
+	g.mazeSolving.endY = -1
+	g.mazeSolving.isStartSet = false
+	g.mazeSolving.isEndSet = false
+	g.mazeSolving.path = []Point{} // Очищаем путь
+	log.Println("Игра сброшена")
 }
