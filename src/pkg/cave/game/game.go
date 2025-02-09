@@ -1,6 +1,7 @@
-package game
+package game_cave
 
 import (
+	"go-maze/config"
 	"go-maze/pkg/cave"
 	"image/color"
 	"log"
@@ -9,15 +10,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-)
-
-const (
-	maxSize         = 50
-	wallThickness   = 2
-	sceneWidth      = 500
-	sceneHeight     = 500
-	buttonHeight    = 30
-	borderThickness = float32(2)
 )
 
 var colorAlive = color.RGBA{0, 0, 0, 255}
@@ -36,12 +28,12 @@ type Game struct {
 }
 
 func NewGame(w, h, birthLimit, deathLimit, initialChance int) *Game {
-	if w > maxSize || h > maxSize {
-		log.Fatalf("Размер лабиринта не должен превышать %d", maxSize)
+	if w > config.MaxSize || h > config.MaxSize {
+		log.Fatalf("Размер лабиринта не должен превышать %d", config.MaxSize)
 	}
-	ebiten.SetWindowSize(sceneWidth+int(borderThickness*2), sceneHeight+buttonHeight*3+int(borderThickness))
+	ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight*3+int(config.BorderThickness))
 	ebiten.SetWindowTitle("Cave Generator")
-	cellSize := float32(sceneWidth) / float32(w)
+	cellSize := float32(config.SceneWidth) / float32(w)
 	cave := cave.NewCave(w, h)
 	cave.GenerateCave(initialChance, birthLimit, deathLimit)
 	return &Game{
@@ -62,16 +54,16 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 
-		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(config.SceneHeight+config.BorderThickness), config.ButtonHeight) {
 			go g.ShowFileSelector()
 		}
 
-		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness+buttonHeight), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(config.SceneHeight+config.BorderThickness+config.ButtonHeight), config.ButtonHeight) {
 			g.Step()
 			g.autoStepActive = false
 		}
 
-		if g.isInsideButton(float32(x), float32(y), float32(sceneHeight+borderThickness+buttonHeight*2), buttonHeight) {
+		if g.isInsideButton(float32(x), float32(y), float32(config.SceneHeight+config.BorderThickness+config.ButtonHeight*2), config.ButtonHeight) {
 			g.autoStepActive = !g.autoStepActive
 		}
 	}
@@ -93,7 +85,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for y, row := range g.cave.Grid {
 		for x, cell := range row {
 			if cell == cave.Alive {
-				vector.DrawFilledRect(screen, caveX+float32(x)*g.cellSize+2, caveY+float32(y)*g.cellSize+2, g.cellSize-wallThickness, g.cellSize-wallThickness, colorAlive, false)
+				vector.DrawFilledRect(screen, caveX+float32(x)*g.cellSize+2, caveY+float32(y)*g.cellSize+2, g.cellSize-config.WallThickness, g.cellSize-config.WallThickness, colorAlive, false)
 			}
 		}
 	}

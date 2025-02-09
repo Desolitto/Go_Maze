@@ -1,6 +1,7 @@
-package game
+package game_cave
 
 import (
+	"go-maze/config"
 	"log"
 	"os"
 
@@ -9,7 +10,7 @@ import (
 
 func (g *Game) isInsideButton(x, y float32, buttonY float32, buttonHeight float32) bool {
 	buttonX := float32(0)
-	buttonWidth := float32(sceneWidth + borderThickness*2)
+	buttonWidth := float32(config.SceneWidth + config.BorderThickness*2)
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
 }
 

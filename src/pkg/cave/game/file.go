@@ -1,7 +1,8 @@
-package game
+package game_cave
 
 import (
 	"bufio"
+	"go-maze/config"
 	"go-maze/pkg/cave"
 	"log"
 	"os"
@@ -25,17 +26,17 @@ func (g *Game) LoadCaveFromFile(filename string) {
 		}
 
 		width, err := strconv.Atoi(dimensions[0])
-		if err != nil || width > maxSize {
+		if err != nil || width > config.MaxSize {
 			log.Fatal("Неверная ширина пещеры.")
 		}
 
 		height, err := strconv.Atoi(dimensions[1])
-		if err != nil || height > maxSize {
+		if err != nil || height > config.MaxSize {
 			log.Fatal("Неверная высота пещеры.")
 		}
 
 		g.width, g.height = width, height
-		g.cellSize = float32(sceneWidth) / float32(width)
+		g.cellSize = float32(config.SceneWidth) / float32(width)
 		g.cave = cave.NewCave(width, height)
 
 		for y := 0; y < height; y++ {

@@ -41,10 +41,6 @@ type Point struct {
 	Y int
 }
 
-// type Point struct {
-// 	x, y int
-// }
-
 // Конструктор MazeSolving
 func NewMazeSolving(maze *Maze, startX, startY, endX, endY int) *MazeSolving {
 	solvingMatrix := make([][]int, maze.Rows)
@@ -138,13 +134,12 @@ func NewGame(rows, cols int) *Game {
 	if rows > config.MaxSize || cols > config.MaxSize {
 		log.Fatalf("Размер лабиринта не должен превышать %d", config.MaxSize)
 	}
-	// ebiten.SetWindowSize(500+int(2*2), 1000+30*3+int(2))
 	// Пересчитываем размеры окна
 	windowWidth := config.SceneWidth + int(config.BorderThickness*2)
-	windowHeight := config.SceneHeight + config.ButtonHeight*2 + int(config.BorderThickness)
+	windowHeight := config.SceneHeight + config.ButtonHeight*2 + int(config.BorderThickness)*3
 
 	ebiten.SetWindowSize(windowWidth, windowHeight)
-	// ebiten.Update()
+
 	// ebiten.SetWindowSize(config.SceneWidth+int(config.BorderThickness*2), config.SceneHeight+config.ButtonHeight*6+int(config.BorderThickness))
 	ebiten.SetWindowTitle("Maze")
 	cellSize := float32(config.SceneWidth) / float32(cols)
@@ -220,7 +215,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 	g.drawButton(screen, "Open maze", float32(config.SceneHeight+config.BorderThickness), strokeColor)
-	g.drawButton(screen, "Reset", float32(config.SceneHeight+config.BorderThickness+config.ButtonHeight), strokeColor)
+	g.drawButton(screen, "Reset", float32(config.SceneHeight+config.BorderThickness*2+config.ButtonHeight), strokeColor)
 	// Отрисовка начальной точки
 	if g.mazeSolving.isStartSet {
 		vector.DrawFilledRect(screen, float32(g.mazeSolving.startX)*g.cellSize, float32(g.mazeSolving.startY)*g.cellSize, g.cellSize, g.cellSize, color.RGBA{0, 255, 0, 255}, false) // Зеленый цвет
@@ -252,8 +247,8 @@ func (g *Game) drawButton(screen *ebiten.Image, buttonText string, buttonY float
 
 	// Отрисовка границы под кнопкой
 	borderY := buttonY + config.ButtonHeight
-	borderHeight := float32(4)                // Увеличенная высота границы
-	borderColor := color.RGBA{255, 0, 0, 255} // Красный цвет границы
+	borderHeight := float32(4)                  // Увеличенная высота границы
+	borderColor := color.RGBA{192, 192, 192, 0} // Красный цвет границы
 
 	vector.DrawFilledRect(screen, 0, borderY, buttonWidth, borderHeight, borderColor, false)
 }
@@ -275,5 +270,11 @@ func (g *Game) ResetGame() {
 	g.mazeSolving.isStartSet = false
 	g.mazeSolving.isEndSet = false
 	g.mazeSolving.path = []Point{} // Очищаем путь
+	// Сбрасываем матрицу решения
+	for y := range g.mazeSolving.solvingMatrix {
+		for x := range g.mazeSolving.solvingMatrix[y] {
+			g.mazeSolving.solvingMatrix[y][x] = 0 // Сбрасываем посещенные клетки
+		}
+	}
 	log.Println("Игра сброшена")
 }

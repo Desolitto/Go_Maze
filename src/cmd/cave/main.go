@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"go-maze/pkg/cave/game"
+	game "go-maze/pkg/cave/game"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/rand"
