@@ -22,7 +22,7 @@ func (m *Maze) copyPreviousRow(row int, currentSetCount *int) {
 
 }
 
-func (m *Maze) initializeSets() {
+func (m *Maze) InitializeSets() {
 	for row := 0; row < m.Rows; row++ {
 		for col := 0; col < m.Cols; col++ {
 			m.Cells[row][col].Set = row*m.Cols + col + 1
@@ -79,7 +79,7 @@ func (m *Maze) addBottomWalls(row int) {
 }
 
 func (m *Maze) GenerateEller(randomNumbers []int) {
-	m.initializeSets()
+	m.InitializeSets()
 
 	currentSetCount := 1
 	m.setFirstRowSets(&currentSetCount)

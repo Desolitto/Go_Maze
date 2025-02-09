@@ -46,8 +46,6 @@ func NewGame(rows, cols int) *Game {
 		// randomNumbers := make([]int, 0) // Для 4 строк по 4 столбца
 		// randomNumbers = append(randomNumbers, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0)
 	*/
-	log.Printf("Window size: %d x %d", windowWidth, windowHeight)
-
 	maze.GenerateEller(randomNumbers)
 	mazeSolving := NewMazeSolving(maze, -1, -1, -1, -1) // Начальные и конечные точки пока не установлены
 	return &Game{maze: maze, cellSize: cellSize, mazeSolving: mazeSolving}
