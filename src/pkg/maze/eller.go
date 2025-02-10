@@ -1,6 +1,6 @@
 package maze
 
-func (m *Maze) copyPreviousRow(row int, currentSetCount *int) {
+func (m *Maze) СopyPreviousRow(row int, currentSetCount *int) {
 	for col := 0; col < m.Cols; col++ {
 		m.Cells[row][col].Right = m.Cells[row-1][col].Right
 		m.Cells[row][col].Bottom = m.Cells[row-1][col].Bottom
@@ -30,22 +30,27 @@ func (m *Maze) InitializeSets() {
 	}
 }
 
-func (m *Maze) setFirstRowSets(currentSetCount *int) {
+func (m *Maze) SetFirstRowSets(currentSetCount *int) {
 	for col := 0; col < m.Cols; col++ {
 		m.Cells[0][col].Set = col + 1
 		(*currentSetCount)++
 	}
 }
 
-func (m *Maze) processRightWalls(row int, randomNumbers []int, index *int) {
+func (m *Maze) ProcessRightWalls(row int, randomNumbers []int, index *int) {
+
 	for col := 0; col < m.Cols-1; col++ {
+		if *index >= len(randomNumbers) {
+			return
+		}
+
 		if randomNumbers[*index] == 1 {
 			m.Cells[row][col].Right = true
 		} else {
 			set1 := m.Cells[row][col].Set
 			set2 := m.Cells[row][col+1].Set
 			if set1 != set2 {
-				m.mergeSets(set1, set2)
+				m.MergeSets(set1, set2)
 			} else {
 				m.Cells[row][col].Right = true
 			}
@@ -54,7 +59,7 @@ func (m *Maze) processRightWalls(row int, randomNumbers []int, index *int) {
 	}
 }
 
-func (m *Maze) processBottomWalls(row int, randomNumbers []int, index *int) {
+func (m *Maze) ProcessBottomWalls(row int, randomNumbers []int, index *int) {
 	for col := 0; col < m.Cols; col++ {
 		set := m.Cells[row][col].Set
 		count := 0
@@ -72,7 +77,7 @@ func (m *Maze) processBottomWalls(row int, randomNumbers []int, index *int) {
 		*index++
 	}
 }
-func (m *Maze) addBottomWalls(row int) {
+func (m *Maze) AddBottomWalls(row int) {
 	for col := 0; col < m.Cols; col++ {
 		m.Cells[row][col].Bottom = true
 	}
@@ -82,37 +87,37 @@ func (m *Maze) GenerateEller(randomNumbers []int) {
 	m.InitializeSets()
 
 	currentSetCount := 1
-	m.setFirstRowSets(&currentSetCount)
+	m.SetFirstRowSets(&currentSetCount)
 	index := 0
 	for row := 0; row < m.Rows; row++ {
 
 		if row > 0 {
-			m.copyPreviousRow(row, &currentSetCount)
+			m.СopyPreviousRow(row, &currentSetCount)
 		}
 
-		m.processRightWalls(row, randomNumbers, &index)
-		m.processBottomWalls(row, randomNumbers, &index)
+		m.ProcessRightWalls(row, randomNumbers, &index)
+		m.ProcessBottomWalls(row, randomNumbers, &index)
 
 		if row == m.Rows-1 {
-			m.addBottomWalls(row)
-			m.mergeLastRowSets(row)
+			m.AddBottomWalls(row)
+			m.MergeLastRowSets(row)
 		}
 	}
 
 }
 
-func (m *Maze) mergeLastRowSets(row int) {
+func (m *Maze) MergeLastRowSets(row int) {
 	for col := 0; col < m.Cols-1; col++ {
 		set1 := m.Cells[row][col].Set
 		set2 := m.Cells[row][col+1].Set
 		if set1 != set2 {
 			m.Cells[row][col].Right = false
-			m.mergeSets(set1, set2)
+			m.MergeSets(set1, set2)
 		}
 	}
 }
 
-func (m *Maze) mergeSets(set1, set2 int) {
+func (m *Maze) MergeSets(set1, set2 int) {
 	for r := 0; r < m.Rows; r++ {
 		for c := 0; c < m.Cols; c++ {
 			if m.Cells[r][c].Set == set2 {
