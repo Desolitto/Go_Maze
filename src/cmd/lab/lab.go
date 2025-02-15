@@ -19,6 +19,7 @@ type LabGame struct {
 	inputHeight  string
 	mazeStarted  bool // Флаг для проверки, создан ли лабиринт
 	cursorX      float32
+	activeField  string // Новое поле для отслеживания активного поля ввода
 }
 
 func (g *LabGame) Update() error {
@@ -32,7 +33,11 @@ func (g *LabGame) Update() error {
 		// Обработка нажатий кнопок
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
-			if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) && !g.mazeStarted {
+			if g.isInsideButton(float32(x), float32(y), 10, 50, 200, 40) {
+				g.activeField = "height"
+			} else if g.isInsideButton(float32(x), float32(y), 10, 100, 200, 40) {
+				g.activeField = "width"
+			} else if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) && !g.mazeStarted {
 				g.startMaze()
 				g.mazeStarted = true
 			} else if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
@@ -41,32 +46,27 @@ func (g *LabGame) Update() error {
 			}
 		}
 
-		// Обработка ввода с клавиатуры для строк
+		// Обработка ввода с клавиатуры
 		if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
-			if len(g.inputHeight) > 0 {
+			if g.activeField == "height" && len(g.inputHeight) > 0 {
 				g.inputHeight = g.inputHeight[:len(g.inputHeight)-1] // Удаляем последний символ
-			}
-		} else {
-			inputChars := ebiten.AppendInputChars(nil)
-			if len(inputChars) == 1 {
-				g.inputHeight += string(inputChars[0])
-			}
-		}
-
-		// Обработка ввода с клавиатуры для столбцов
-		if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
-			if len(g.inputWidth) > 0 {
+			} else if g.activeField == "width" && len(g.inputWidth) > 0 {
 				g.inputWidth = g.inputWidth[:len(g.inputWidth)-1] // Удаляем последний символ
 			}
 		} else {
 			inputChars := ebiten.AppendInputChars(nil)
 			if len(inputChars) == 1 {
-				g.inputWidth += string(inputChars[0])
+				if g.activeField == "height" {
+					g.inputHeight += string(inputChars[0])
+				} else if g.activeField == "width" {
+					g.inputWidth += string(inputChars[0])
+				}
 			}
 		}
 	}
 	return nil
 }
+
 func (g *LabGame) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{0, 0, 0, 0}) // Заливка фона белым цветом
 
@@ -76,8 +76,8 @@ func (g *LabGame) Draw(screen *ebiten.Image) {
 		}
 	} else {
 		// Отрисовка полей для ввода
-		g.drawInputField(screen, "Rows: "+g.inputHeight, 50)
-		g.drawInputField(screen, "Cols: "+g.inputWidth, 100)
+		g.drawInputField(screen, "Rows: "+g.inputHeight, 50, g.activeField == "height")
+		g.drawInputField(screen, "Cols: "+g.inputWidth, 100, g.activeField == "width")
 
 		// Отрисовка кнопок
 		g.drawButton(screen, "Start MAZE", 170, color.RGBA{0, 0, 155, 255})
@@ -102,12 +102,16 @@ func (g *LabGame) isInsideButton(x, y, buttonX, buttonY, buttonWidth, buttonHeig
 	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
 }
 
-func (g *LabGame) drawInputField(screen *ebiten.Image, label string, fieldY float32) {
+func (g *LabGame) drawInputField(screen *ebiten.Image, label string, fieldY float32, isActive bool) {
 	fieldWidth := float32(config.SceneWidth - config.BorderThickness*10)
 	fieldHeight := float32(40) // Увеличиваем высоту поля ввода
 
 	// Отрисовка поля ввода
-	vector.DrawFilledRect(screen, 10, fieldY, fieldWidth, fieldHeight, color.RGBA{0, 255, 255, 0}, false) // Белый фон с отступами
+	if isActive {
+		vector.DrawFilledRect(screen, 10, fieldY, fieldWidth, fieldHeight, color.RGBA{255, 255, 0, 255}, false) // Желтый фон с отступами
+	} else {
+		vector.DrawFilledRect(screen, 10, fieldY, fieldWidth, fieldHeight, color.RGBA{0, 255, 255, 0}, false) // Белый фон с отступами
+	}
 	ebitenutil.DebugPrintAt(screen, label, int(15), int(fieldY+10))
 }
 
