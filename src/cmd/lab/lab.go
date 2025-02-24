@@ -13,13 +13,17 @@ import (
 )
 
 type LabGame struct {
-	isMaze       bool
-	gameInstance *maze.Game // Ссылка на экземпляр Game
-	inputWidth   string
-	inputHeight  string
-	mazeStarted  bool // Флаг для проверки, создан ли лабиринт
-	cursorX      float32
-	activeField  string // Новое поле для отслеживания активного поля ввода
+	isMaze             bool
+	isCave             bool
+	gameInstance       *maze.Game // Ссылка на экземпляр Game
+	inputWidth         string
+	inputHeight        string
+	inputBirthLimit    string
+	inputDeathLimit    string
+	inputInitialChance string
+	mazeStarted        bool // Флаг для проверки, создан ли лабиринт
+	cursorX            float32
+	activeField        string // Новое поле для отслеживания активного поля ввода
 }
 
 func (g *LabGame) Update() error {
@@ -33,18 +37,32 @@ func (g *LabGame) Update() error {
 		// Обработка нажатий кнопок
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
+			if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) && !g.mazeStarted {
+				g.startMaze()
+				g.mazeStarted = true
+			} else if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
+				// g.isMaze = false
+				g.isCave = true
+				// g.startCave()
+				g.activeField = "birthLimit" // Устанавливаем активное поле на "birthLimit"
+			}
+		}
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+			x, y := ebiten.CursorPosition()
 			if g.isInsideButton(float32(x), float32(y), 10, 50, 200, 40) {
 				g.activeField = "height"
 			} else if g.isInsideButton(float32(x), float32(y), 10, 100, 200, 40) {
 				g.activeField = "width"
-			} else if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) && !g.mazeStarted {
-				g.startMaze()
-				g.mazeStarted = true
-			} else if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
-				g.isMaze = false
-				// g.startCave()
+			} else if g.isInsideButton(float32(x), float32(y), 10, 290, 200, 40) {
+				g.activeField = "birthLimit"
+			} else if g.isInsideButton(float32(x), float32(y), 10, 360, 200, 40) {
+				g.activeField = "deathLimit"
+			} else if g.isInsideButton(float32(x), float32(y), 10, 430, 200, 40) {
+				g.activeField = "initialChance"
 			}
 		}
+
+		// Отдельная проверка для кнопки "Start MAZE"
 
 		// Обработка ввода с клавиатуры
 		if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
@@ -52,6 +70,12 @@ func (g *LabGame) Update() error {
 				g.inputHeight = g.inputHeight[:len(g.inputHeight)-1] // Удаляем последний символ
 			} else if g.activeField == "width" && len(g.inputWidth) > 0 {
 				g.inputWidth = g.inputWidth[:len(g.inputWidth)-1] // Удаляем последний символ
+			} else if g.activeField == "birthLimit" && len(g.inputBirthLimit) > 0 {
+				g.inputBirthLimit = g.inputBirthLimit[:len(g.inputBirthLimit)-1] // Удаляем последний символ
+			} else if g.activeField == "deathLimit" && len(g.inputDeathLimit) > 0 {
+				g.inputDeathLimit = g.inputDeathLimit[:len(g.inputDeathLimit)-1] // Удаляем последний символ
+			} else if g.activeField == "initialChance" && len(g.inputInitialChance) > 0 {
+				g.inputInitialChance = g.inputInitialChance[:len(g.inputInitialChance)-1] // Удаляем последний символ
 			}
 		} else {
 			inputChars := ebiten.AppendInputChars(nil)
@@ -60,6 +84,12 @@ func (g *LabGame) Update() error {
 					g.inputHeight += string(inputChars[0])
 				} else if g.activeField == "width" {
 					g.inputWidth += string(inputChars[0])
+				} else if g.activeField == "birthLimit" {
+					g.inputBirthLimit += string(inputChars[0])
+				} else if g.activeField == "deathLimit" {
+					g.inputDeathLimit += string(inputChars[0])
+				} else if g.activeField == "initialChance" {
+					g.inputInitialChance += string(inputChars[0])
 				}
 			}
 		}
@@ -82,6 +112,12 @@ func (g *LabGame) Draw(screen *ebiten.Image) {
 		// Отрисовка кнопок
 		g.drawButton(screen, "Start MAZE", 170, color.RGBA{0, 0, 155, 255})
 		g.drawButton(screen, "Start CAVE", 230, color.RGBA{0, 155, 0, 255})
+		if g.isCave {
+			g.drawInputField(screen, "Birth Limit: "+g.inputBirthLimit, 300, g.activeField == "birthLimit")
+			g.drawInputField(screen, "Death Limit: "+g.inputDeathLimit, 350, g.activeField == "deathLimit")
+			g.drawInputField(screen, "Initial Chance: "+g.inputInitialChance, 400, g.activeField == "initialChance")
+			g.drawButton(screen, "Start CAVE", 500, color.RGBA{0, 155, 0, 255})
+		}
 	}
 }
 
