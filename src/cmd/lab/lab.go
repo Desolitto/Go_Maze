@@ -24,30 +24,14 @@ type LabGame struct {
 	inputBirthLimit    string
 	inputDeathLimit    string
 	inputInitialChance string
-	mazeStarted        bool   // Флаг для проверки, создан ли лабиринт
-	caveStarted        bool   // Флаг для отслеживания, была ли уже создана пещера
+	mazeStarted        bool // Флаг для проверки, создан ли лабиринт
+	caveStarted        bool // Флаг для отслеживания, была ли уже создана пещера
+	showCaveFields     bool
 	activeField        string // Новое поле для отслеживания активного поля ввода
 }
 
-// if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-//
-//	if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) && !g.mazeStarted {
-//		g.startMaze()
-//		g.mazeStarted = true
-//	} else if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
 func (g *LabGame) Update() error {
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		x, y := ebiten.CursorPosition()
-
-		if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) {
-			g.startMaze()
-		}
-
-		if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
-			g.startCave()
-		}
-	}
-
+	g.HandleInput()
 	if g.isMaze {
 		if g.gameInstance != nil {
 			return g.gameInstance.Update()
@@ -58,10 +42,12 @@ func (g *LabGame) Update() error {
 		}
 	} else {
 		// Обработка ввода с клавиатуры
+		if len(ebiten.AppendInputChars(nil)) > 0 {
+			g.handleTextInput()
+		}
+
 		if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
 			g.handleKeyboardInput()
-		} else {
-			g.handleTextInput()
 		}
 	}
 
@@ -79,6 +65,8 @@ func (g *LabGame) handleCaveInputFieldClicks(x, y float32) {
 		g.activeField = "deathLimit"
 	} else if g.isInsideButton(float32(x), float32(y), 10, 430, 200, 40) {
 		g.activeField = "initialChance"
+	} else {
+		g.activeField = "" // Сбрасываем активное поле, если кликнули вне полей
 	}
 }
 func (g *LabGame) handleTextInput() {
@@ -99,16 +87,66 @@ func (g *LabGame) handleTextInput() {
 }
 func (g *LabGame) handleKeyboardInput() {
 	if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
-		if g.activeField == "height" && len(g.inputHeight) > 0 {
-			g.inputHeight = g.inputHeight[:len(g.inputHeight)-1] // Удаляем последний символ
-		} else if g.activeField == "width" && len(g.inputWidth) > 0 {
-			g.inputWidth = g.inputWidth[:len(g.inputWidth)-1] // Удаляем последний символ
-		} else if g.activeField == "birthLimit" && len(g.inputBirthLimit) > 0 {
-			g.inputBirthLimit = g.inputBirthLimit[:len(g.inputBirthLimit)-1] // Удаляем последний символ
-		} else if g.activeField == "deathLimit" && len(g.inputDeathLimit) > 0 {
-			g.inputDeathLimit = g.inputDeathLimit[:len(g.inputDeathLimit)-1] // Удаляем последний символ
-		} else if g.activeField == "initialChance" && len(g.inputInitialChance) > 0 {
-			g.inputInitialChance = g.inputInitialChance[:len(g.inputInitialChance)-1] // Удаляем последний символ
+		switch g.activeField {
+		case "height":
+			if len(g.inputHeight) > 0 {
+				g.inputHeight = g.inputHeight[:len(g.inputHeight)-1]
+			}
+		case "width":
+			if len(g.inputWidth) > 0 {
+				g.inputWidth = g.inputWidth[:len(g.inputWidth)-1]
+			}
+		case "birthLimit":
+			if len(g.inputBirthLimit) > 0 {
+				g.inputBirthLimit = g.inputBirthLimit[:len(g.inputBirthLimit)-1]
+			}
+		case "deathLimit":
+			if len(g.inputDeathLimit) > 0 {
+				g.inputDeathLimit = g.inputDeathLimit[:len(g.inputDeathLimit)-1]
+			}
+		case "initialChance":
+			if len(g.inputInitialChance) > 0 {
+				g.inputInitialChance = g.inputInitialChance[:len(g.inputInitialChance)-1]
+			}
+		}
+	}
+}
+
+func (g *LabGame) HandleInput() {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		x, y := ebiten.CursorPosition()
+
+		// Обработка нажатия на кнопку "Старт лабиринта"
+		if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) {
+			if !g.mazeStarted {
+				g.startMaze()
+				g.mazeStarted = true
+			}
+		}
+
+		// Обработка нажатия на кнопку "CAVE SETTINGS"
+		if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
+			fmt.Println("Opening CAVE SETTINGS")
+			if !g.showCaveFields { // Если поля ввода еще не открыты
+				fmt.Println("Setting g.showCaveFields to true")
+				g.showCaveFields = true // Показываем поля для ввода
+				g.activeField = ""      // Сбрасываем активное поле
+			} else {
+				fmt.Println("g.showCaveFields is already true")
+			}
+		}
+
+		// Обработка нажатия на кнопку "Запустить пещеры"
+		if g.showCaveFields && g.isInsideButton(float32(x), float32(y), 10, 500, 200, 40) {
+			if !g.caveStarted {
+				g.startCave()
+				g.caveStarted = true
+				fmt.Println("Cave started with parameters.")
+			}
+		}
+
+		if g.showCaveFields {
+			g.handleCaveInputFieldClicks(float32(x), float32(y))
 		}
 	}
 }
@@ -130,12 +168,14 @@ func (g *LabGame) Draw(screen *ebiten.Image) {
 
 		// Отрисовка кнопок
 		g.drawButton(screen, "Start MAZE", 170, color.RGBA{0, 0, 155, 255})
-		g.drawButton(screen, "Start CAVE", 230, color.RGBA{0, 155, 0, 255})
-		if g.isCave {
+		g.drawButton(screen, "CAVE SETTINGS", 230, color.RGBA{0, 155, 0, 255})
+
+		// Отрисовка дополнительных полей для пещеры, если они активны
+		if g.showCaveFields {
 			g.drawInputField(screen, "Birth Limit: "+g.inputBirthLimit, 290, g.activeField == "birthLimit")
-			g.drawInputField(screen, "Death Limit: "+g.inputDeathLimit, 360, g.activeField == "deathLimit")
-			g.drawInputField(screen, "Initial Chance: "+g.inputInitialChance, 430, g.activeField == "initialChance")
-			g.drawButton(screen, "Start CAVE", 500, color.RGBA{0, 155, 0, 255})
+			g.drawInputField(screen, "Death Limit: "+g.inputDeathLimit, 340, g.activeField == "deathLimit")
+			g.drawInputField(screen, "Initial Chance: "+g.inputInitialChance, 390, g.activeField == "initialChance")
+			g.drawButton(screen, "Start CAVE", 440, color.RGBA{0, 155, 0, 255})
 		}
 	}
 }
