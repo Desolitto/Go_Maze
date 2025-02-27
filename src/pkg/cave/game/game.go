@@ -123,6 +123,13 @@ func (g *Game) Step() {
 
 	g.cave.Grid = newGrid
 }
+
+// game_cave.go
+func (g *Game) ResetGame() {
+	// Реализация метода ResetGame() для cave.Game
+	g.cave.GenerateCave(g.initialChance, g.birthLimit, g.deathLimit)
+}
+
 func (g *Game) PrintCave() {
 	g.cave.Print()
 }

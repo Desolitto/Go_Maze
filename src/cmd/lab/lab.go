@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"go-maze/config"
+	game_cave "go-maze/pkg/cave/game"
+	"go-maze/pkg/game"
 	"go-maze/pkg/maze"
 	"image/color"
 	"log"
@@ -15,40 +18,45 @@ import (
 type LabGame struct {
 	isMaze             bool
 	isCave             bool
-	gameInstance       *maze.Game // Ссылка на экземпляр Game
+	gameInstance       game.GameInterface // Ссылка на экземпляр Game
 	inputWidth         string
 	inputHeight        string
 	inputBirthLimit    string
 	inputDeathLimit    string
 	inputInitialChance string
-	mazeStarted        bool // Флаг для проверки, создан ли лабиринт
-	cursorX            float32
+	mazeStarted        bool   // Флаг для проверки, создан ли лабиринт
+	caveStarted        bool   // Флаг для отслеживания, была ли уже создана пещера
 	activeField        string // Новое поле для отслеживания активного поля ввода
 }
 
+// if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+//
+//	if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) && !g.mazeStarted {
+//		g.startMaze()
+//		g.mazeStarted = true
+//	} else if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
 func (g *LabGame) Update() error {
-	if g.isMaze {
-		if g.gameInstance != nil {
-			if err := g.gameInstance.Update(); err != nil {
-				return err
-			}
-		}
-	} else {
-		// Обработка нажатий кнопок
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-			x, y := ebiten.CursorPosition()
-			if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) && !g.mazeStarted {
-				g.startMaze()
-				g.mazeStarted = true
-			} else if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
-				g.isMaze = false
-				g.isCave = true
-				g.activeField = "birthLimit" // Устанавливаем активное поле на "birthLimit"
-			} else {
-				g.handleCaveInputFieldClicks(float32(x), float32(y))
-			}
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		x, y := ebiten.CursorPosition()
+
+		if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) {
+			g.startMaze()
 		}
 
+		if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
+			g.startCave()
+		}
+	}
+
+	if g.isMaze {
+		if g.gameInstance != nil {
+			return g.gameInstance.Update()
+		}
+	} else if g.isCave {
+		if g.gameInstance != nil {
+			return g.gameInstance.Update()
+		}
+	} else {
 		// Обработка ввода с клавиатуры
 		if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
 			g.handleKeyboardInput()
@@ -56,8 +64,10 @@ func (g *LabGame) Update() error {
 			g.handleTextInput()
 		}
 	}
+
 	return nil
 }
+
 func (g *LabGame) handleCaveInputFieldClicks(x, y float32) {
 	if g.isInsideButton(float32(x), float32(y), 10, 50, 200, 40) {
 		g.activeField = "height"
@@ -109,6 +119,10 @@ func (g *LabGame) Draw(screen *ebiten.Image) {
 		if g.gameInstance != nil {
 			g.gameInstance.Draw(screen) // Отрисовка лабиринта
 		}
+	} else if g.isCave {
+		if g.gameInstance != nil {
+			g.gameInstance.Draw(screen) // Отрисовка пещеры
+		}
 	} else {
 		// Отрисовка полей для ввода
 		g.drawInputField(screen, "Rows: "+g.inputHeight, 50, g.activeField == "height")
@@ -136,11 +150,66 @@ func (g *LabGame) startMaze() {
 		cols = 50 // Установите значение по умолчанию, если ввод некорректен
 	}
 	g.gameInstance = maze.NewGame(rows, cols) // Создаем новый экземпляр Game
-	g.isMaze = true                           // Устанавливаем состояние в true, чтобы отрисовать лабиринт
+	g.isMaze = true
+	g.isCave = false // Сбрасываем состояние пещеры
+	fmt.Println("Maze started")
+}
+
+func (g *LabGame) startCave() {
+	fmt.Println("Starting cave...")
+
+	rows, err := strconv.Atoi(g.inputHeight)
+	if err != nil {
+		fmt.Printf("Error parsing rows: %v\n", err)
+		rows = 20 // Установите значение по умолчанию, если ввод некорректен
+	}
+	cols, err := strconv.Atoi(g.inputWidth)
+	if err != nil {
+		fmt.Printf("Error parsing cols: %v\n", err)
+		cols = 200 // Установите значение по умолчанию, если ввод некорректен
+	}
+
+	// Инициализируем значения по умолчанию, если они пустые
+	if g.inputBirthLimit == "" {
+		g.inputBirthLimit = "4"
+	}
+	if g.inputDeathLimit == "" {
+		g.inputDeathLimit = "3"
+	}
+	if g.inputInitialChance == "" {
+		g.inputInitialChance = "55"
+	}
+
+	birthLimit, err := strconv.Atoi(g.inputBirthLimit)
+	if err != nil {
+		fmt.Printf("Error parsing birth limit: %v\n", err)
+		birthLimit = 4 // Установите значение по умолчанию, если ввод некорректен
+	}
+	deathLimit, err := strconv.Atoi(g.inputDeathLimit)
+	if err != nil {
+		fmt.Printf("Error parsing death limit: %v\n", err)
+		deathLimit = 4 // Установите значение по умолчанию, если ввод некорректен
+	}
+	initialChance, err := strconv.Atoi(g.inputInitialChance)
+	if err != nil {
+		fmt.Printf("Error parsing initial chance: %v\n", err)
+		initialChance = 55 // Установите значение по умолчанию, если ввод некорректен
+	}
+
+	fmt.Printf("Creating new game with params: rows=%d, cols=%d, birthLimit=%d, deathLimit=%d, initialChance=%d\n",
+		rows, cols, birthLimit, deathLimit, initialChance)
+
+	g.gameInstance = game_cave.NewGame(rows, cols, birthLimit, deathLimit, initialChance)
+	g.isCave = true  // Устанавливаем состояние в true, чтобы отрисовать пещеру
+	g.isMaze = false // Сбрасываем состояние лабиринта
+	fmt.Println("Cave started")
 }
 
 func (g *LabGame) isInsideButton(x, y, buttonX, buttonY, buttonWidth, buttonHeight float32) bool {
-	return x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight
+	screenWidth := 500.0
+	buttonCenterX := float32(screenWidth)/2 - buttonWidth/2
+	return x >= buttonCenterX+buttonX && x <= buttonCenterX+buttonX+buttonWidth &&
+		y >= buttonY && y <= buttonY+buttonHeight
 }
 
 func (g *LabGame) drawInputField(screen *ebiten.Image, label string, fieldY float32, isActive bool) {
