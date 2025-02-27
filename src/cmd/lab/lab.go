@@ -61,9 +61,9 @@ func (g *LabGame) handleCaveInputFieldClicks(x, y float32) {
 		g.activeField = "width"
 	} else if g.isInsideButton(float32(x), float32(y), 10, 290, 200, 40) {
 		g.activeField = "birthLimit"
-	} else if g.isInsideButton(float32(x), float32(y), 10, 360, 200, 40) {
+	} else if g.isInsideButton(float32(x), float32(y), 10, 340, 200, 40) {
 		g.activeField = "deathLimit"
-	} else if g.isInsideButton(float32(x), float32(y), 10, 430, 200, 40) {
+	} else if g.isInsideButton(float32(x), float32(y), 10, 390, 200, 40) {
 		g.activeField = "initialChance"
 	} else {
 		g.activeField = "" // Сбрасываем активное поле, если кликнули вне полей
@@ -126,22 +126,19 @@ func (g *LabGame) HandleInput() {
 
 		// Обработка нажатия на кнопку "CAVE SETTINGS"
 		if g.isInsideButton(float32(x), float32(y), 10, 230, 200, 40) {
-			fmt.Println("Opening CAVE SETTINGS")
+
 			if !g.showCaveFields { // Если поля ввода еще не открыты
-				fmt.Println("Setting g.showCaveFields to true")
 				g.showCaveFields = true // Показываем поля для ввода
 				g.activeField = ""      // Сбрасываем активное поле
-			} else {
-				fmt.Println("g.showCaveFields is already true")
 			}
 		}
 
 		// Обработка нажатия на кнопку "Запустить пещеры"
-		if g.showCaveFields && g.isInsideButton(float32(x), float32(y), 10, 500, 200, 40) {
+		if g.showCaveFields && g.isInsideButton(float32(x), float32(y), 10, 440, 200, 40) {
 			if !g.caveStarted {
 				g.startCave()
 				g.caveStarted = true
-				fmt.Println("Cave started with parameters.")
+
 			}
 		}
 
