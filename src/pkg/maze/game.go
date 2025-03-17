@@ -48,6 +48,7 @@ func NewGame(rows, cols int) *Game {
 	*/
 	maze.GenerateEller(randomNumbers)
 	mazeSolving := NewMazeSolving(maze, -1, -1, -1, -1) // Начальные и конечные точки пока не установлены
+	maze.SaveMaze("maze.txt")
 	return &Game{maze: maze, cellSize: cellSize, mazeSolving: mazeSolving}
 }
 

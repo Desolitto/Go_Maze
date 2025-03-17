@@ -45,16 +45,26 @@ func (g *LabGame) Update() error {
 		if len(ebiten.AppendInputChars(nil)) > 0 {
 			g.handleTextInput()
 		}
-
 		if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
 			g.handleKeyboardInput()
 		}
+
 	}
 
 	return nil
 }
 
+func (g *LabGame) HandleRowColsInput(x, y float32) {
+	if g.isInsideButton(float32(x), float32(y), 10, 50, 200, 40) {
+		g.activeField = "height"
+	} else if g.isInsideButton(float32(x), float32(y), 10, 100, 200, 40) {
+		g.activeField = "width"
+	} else {
+		g.activeField = "" // Сбрасываем активное поле, если кликнули вне полей
+	}
+}
 func (g *LabGame) handleCaveInputFieldClicks(x, y float32) {
+	// а так работает не сомтря на дублирование
 	if g.isInsideButton(float32(x), float32(y), 10, 50, 200, 40) {
 		g.activeField = "height"
 	} else if g.isInsideButton(float32(x), float32(y), 10, 100, 200, 40) {
@@ -72,19 +82,21 @@ func (g *LabGame) handleCaveInputFieldClicks(x, y float32) {
 func (g *LabGame) handleTextInput() {
 	inputChars := ebiten.AppendInputChars(nil)
 	if len(inputChars) == 1 {
-		if g.activeField == "height" {
+		switch g.activeField {
+		case "height":
 			g.inputHeight += string(inputChars[0])
-		} else if g.activeField == "width" {
+		case "width":
 			g.inputWidth += string(inputChars[0])
-		} else if g.activeField == "birthLimit" {
+		case "birthLimit":
 			g.inputBirthLimit += string(inputChars[0])
-		} else if g.activeField == "deathLimit" {
+		case "deathLimit":
 			g.inputDeathLimit += string(inputChars[0])
-		} else if g.activeField == "initialChance" {
+		case "initialChance":
 			g.inputInitialChance += string(inputChars[0])
 		}
 	}
 }
+
 func (g *LabGame) handleKeyboardInput() {
 	if ebiten.IsKeyPressed(ebiten.KeyBackspace) {
 		switch g.activeField {
@@ -115,7 +127,7 @@ func (g *LabGame) handleKeyboardInput() {
 func (g *LabGame) HandleInput() {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
-
+		g.HandleRowColsInput(float32(x), float32(y))
 		// Обработка нажатия на кнопку "Старт лабиринта"
 		if g.isInsideButton(float32(x), float32(y), 10, 170, 200, 40) {
 			if !g.mazeStarted {
